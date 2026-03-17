@@ -26,6 +26,7 @@ jobs:
             vte4 gdk-pixbuf2 \
             wayland wayland-protocols wlr-protocols \
             nlohmann-json \
+            mako swww dex grim slurp wl-clipboard ttf-font-awesome \
             fakeroot sudo
 
       - name: Checkout repository
