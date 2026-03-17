@@ -16,6 +16,10 @@
 #include <gtk/gtk.h>
 #include <lightdm.h>
 
+#if HYALO_HAS_GTK4_LAYER_SHELL
+#include <gtk4-layer-shell.h>
+#endif
+
 // ======================== CSS loading ========================
 
 static void load_css() {
@@ -99,6 +103,80 @@ static void on_show_prompt(LightDMGreeter* greeter, const gchar* text,
 static void on_show_message(LightDMGreeter* greeter, const gchar* text,
                             LightDMMessageType type, gpointer user_data);
 static void on_authentication_complete(LightDMGreeter* greeter, gpointer user_data);
+
+static GdkMonitor* select_primary_monitor(GdkDisplay* display) {
+    if (!display) {
+        return nullptr;
+    }
+
+    auto* monitors = gdk_display_get_monitors(display);
+    if (!monitors) {
+        return nullptr;
+    }
+
+    const auto monitor_count = g_list_model_get_n_items(G_LIST_MODEL(monitors));
+    GdkMonitor* fallback_monitor = nullptr;
+
+    for (guint index = 0; index < monitor_count; ++index) {
+        auto* monitor = GDK_MONITOR(g_list_model_get_item(G_LIST_MODEL(monitors), index));
+        if (!monitor) {
+            continue;
+        }
+
+        if (!fallback_monitor) {
+            fallback_monitor = monitor;
+        }
+
+        GdkRectangle geometry{};
+        gdk_monitor_get_geometry(monitor, &geometry);
+        if (geometry.x <= 0 && 0 < geometry.x + geometry.width
+            && geometry.y <= 0 && 0 < geometry.y + geometry.height) {
+            if (fallback_monitor != monitor) {
+                g_object_unref(fallback_monitor);
+            }
+            return monitor;
+        }
+
+        g_object_unref(monitor);
+    }
+
+    return fallback_monitor;
+}
+
+static void configure_window_mode(GtkWindow* window) {
+    auto* display = gtk_widget_get_display(GTK_WIDGET(window));
+    if (auto* monitor = select_primary_monitor(display)) {
+        GdkRectangle geometry{};
+        gdk_monitor_get_geometry(monitor, &geometry);
+        gtk_window_set_default_size(window, geometry.width, geometry.height);
+#if HYALO_HAS_GTK4_LAYER_SHELL
+        gtk_layer_set_monitor(window, monitor);
+#endif
+        g_object_unref(monitor);
+    }
+
+    gtk_window_set_decorated(window, FALSE);
+    gtk_window_set_resizable(window, FALSE);
+
+#if HYALO_HAS_GTK4_LAYER_SHELL
+    gtk_layer_init_for_window(window);
+    gtk_layer_set_namespace(window, "hyalo-greeter");
+    gtk_layer_set_layer(window, GTK_LAYER_SHELL_LAYER_OVERLAY);
+    gtk_layer_set_anchor(window, GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
+    gtk_layer_set_anchor(window, GTK_LAYER_SHELL_EDGE_RIGHT, TRUE);
+    gtk_layer_set_anchor(window, GTK_LAYER_SHELL_EDGE_TOP, TRUE);
+    gtk_layer_set_anchor(window, GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
+    gtk_layer_set_keyboard_mode(window, GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
+#endif
+
+    gtk_window_fullscreen(window);
+}
+
+static gboolean ensure_fullscreen_once(gpointer data) {
+    auto* window = GTK_WINDOW(data);
+    gtk_window_fullscreen(window);
+    return G_SOURCE_REMOVE;
+}
 
 // ======================== Clock ========================
 
@@ -459,8 +537,7 @@ static void build_ui(GtkApplication* gtk_app) {
     // ---- Window ----
     app.window = gtk_application_window_new(gtk_app);
     gtk_window_set_title(GTK_WINDOW(app.window), "Hyalo Greeter");
-    gtk_window_set_decorated(GTK_WINDOW(app.window), FALSE);
-    gtk_window_fullscreen(GTK_WINDOW(app.window));
+    configure_window_mode(GTK_WINDOW(app.window));
     gtk_widget_add_css_class(app.window, "greeter-window");
 
     // ---- Overlay for background + content ----
@@ -681,6 +758,7 @@ static void build_ui(GtkApplication* gtk_app) {
     populate_users();
 
     gtk_window_present(GTK_WINDOW(app.window));
+    g_idle_add(ensure_fullscreen_once, app.window);
 }
 
 // ======================== Main ========================

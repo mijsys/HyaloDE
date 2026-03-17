@@ -38,6 +38,40 @@ err()   { printf "${RED}:: ${NC}%s\n" "$*" >&2; }
 
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+repo_arch() {
+    local arch
+    arch="$(uname -m)"
+    case "$arch" in
+        x86_64|aarch64) echo "$arch" ;;
+        *) echo "x86_64" ;;
+    esac
+}
+
+repo_db_url() {
+    local arch server
+    arch="$(repo_arch)"
+    server="${REPO_SERVER//\$arch/$arch}"
+    echo "${server%/}/hyalode.db"
+}
+
+repo_server_reachable() {
+    local db_url
+    db_url="$(repo_db_url)"
+
+    if have_cmd curl; then
+        curl -fsL --max-time 12 -o /dev/null "$db_url"
+        return $?
+    fi
+
+    if have_cmd wget; then
+        wget -q --spider --timeout=12 "$db_url"
+        return $?
+    fi
+
+    warn "Brak curl/wget, pomijam test dostępności repozytorium: $db_url"
+    return 0
+}
+
 need_root() {
     if [ "$(id -u)" -ne 0 ]; then
         err "To wykonanie wymaga uprawnień root. Uruchom z sudo."
@@ -98,6 +132,16 @@ EOF
 add_pacman_repo() {
     need_root
 
+    local db_url
+    db_url="$(repo_db_url)"
+
+    if ! repo_server_reachable; then
+        err "Repozytorium pacman jest niedostępne: ${db_url}"
+        warn "Wygląda na to, że baza pacmana nie została opublikowana (HTTP 404)."
+        warn "Użyj instalacji ze źródeł: sudo ./install-hyalode.sh --from-source"
+        return 1
+    fi
+
     if grep -q "^\[${REPO_NAME}\]" "$PACMAN_CONF" 2>/dev/null; then
         ok "Repozytorium [${REPO_NAME}] już istnieje w ${PACMAN_CONF}"
         return 0
@@ -113,7 +157,11 @@ Server = ${REPO_SERVER}
 EOF
 
     ok "Repozytorium dodane. Synchronizacja bazy pakietów..."
-    pacman -Sy
+    if ! pacman -Sy; then
+        err "Synchronizacja pacmana nie powiodła się. Cofam wpis repozytorium [${REPO_NAME}]..."
+        sed -i "/^\[${REPO_NAME}\]/,/^$/d" "$PACMAN_CONF"
+        return 1
+    fi
     ok "Gotowe! Teraz możesz zainstalować: sudo pacman -S hyalode"
 }
 
@@ -213,9 +261,19 @@ install_from_repo() {
 
     case "$distro" in
         arch|manjaro|endeavouros|garuda|cachyos)
-            add_pacman_repo
+            if ! add_pacman_repo; then
+                warn "Instalacja z repozytorium nie jest obecnie możliwa."
+                warn "Przechodzę do instalacji ze źródeł..."
+                install_from_source
+                return
+            fi
             info "Instalacja HyaloDE z repozytorium..."
-            pacman -S --noconfirm hyalode
+            if ! pacman -S --noconfirm hyalode; then
+                warn "Instalacja pakietu hyalode nie powiodła się."
+                warn "Przechodzę do instalacji ze źródeł..."
+                install_from_source
+                return
+            fi
             ;;
         *)
             warn "Instalacja z repozytorium dostępna tylko dla Arch Linux."
