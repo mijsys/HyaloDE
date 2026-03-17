@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,7 +26,7 @@ jobs:
             vte4 gdk-pixbuf2 \
             wayland wayland-protocols wlr-protocols \
             nlohmann-json \
-            fakeroot
+            fakeroot sudo
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,7 +46,7 @@ jobs:
           fi
 
           # Build the package
-          su builder -c "makepkg -s --noconfirm --noprogressbar"
+          su builder -c "makepkg --noconfirm --noprogressbar"
 
       - name: Create repo database
         run: |
