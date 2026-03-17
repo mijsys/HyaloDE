@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
-    
+
     steps:
       - name: Setup Arch Linux
         run: |
@@ -33,15 +33,15 @@ jobs:
           # Create non-root user for makepkg
           useradd -m builder
           chown -R builder:builder .
-          
+
           cd packaging/arch
-          
+
           # For tagged releases, update PKGBUILD version
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
             sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
           fi
-          
+
           # Build the package
           su builder -c "makepkg -s --noconfirm --noprogressbar"
 
