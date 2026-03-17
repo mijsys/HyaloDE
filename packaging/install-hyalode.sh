@@ -191,7 +191,7 @@ install_deps_arch() {
     pacman -Sy --needed --noconfirm \
         base-devel cmake meson ninja pkg-config git \
         gtkmm-4.0 gtk4-layer-shell \
-        lightdm liblightdm-gobject-1 \
+        lightdm \
         vte4 gdk-pixbuf2 \
         wayland wayland-protocols wlr-protocols \
         nlohmann-json \

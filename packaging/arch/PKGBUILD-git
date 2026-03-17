@@ -10,7 +10,6 @@ depends=(
     'gtkmm-4.0'
     'gtk4-layer-shell'
     'lightdm'
-    'liblightdm-gobject-1'
     'vte4'
     'gdk-pixbuf2'
     'wayland'
