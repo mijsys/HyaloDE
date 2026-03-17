@@ -1,0 +1,99 @@
+{
+  "language": "pl",
+  "appearance": {
+    "border_radius": 10,
+    "accent_color": "#8dd8b3",
+    "transparency": 0.78,
+    "theme": "hyalo",
+    "icon_pack": "hyalo-icons",
+    "cursor_theme": "hyalo-cursor",
+    "window_theme": "hyaloos",
+    "color_mode": "dark",
+    "enable_blur": true,
+    "enable_animations": true,
+    "font_family": "Manrope",
+    "font_size": 14,
+    "font_hinting": "subpixel-slight",
+    "wallpaper_interval_minutes": 1440,
+    "wallpaper_slideshow": false
+  },
+  "panel": {
+    "position": "top",
+    "height": 40,
+    "show_all_workspaces": false,
+    "auto_hide": false
+  },
+  "display": {
+    "resolution": "2560x1440",
+    "orientation": "landscape",
+    "scaling": "150",
+    "refresh_rate": "144",
+    "vrr": true,
+    "fractional_scaling": true,
+    "night_light": false,
+    "night_light_temperature": 4100
+  },
+  "input": {
+    "pointer_speed": 1.15,
+    "acceleration": "adaptive",
+    "natural_scroll": true,
+    "touchpad_gestures": true,
+    "keyboard_layout": "pl-programmer",
+    "repeat_delay_ms": 320,
+    "repeat_rate": 28,
+    "tablet_pressure": 62
+  },
+  "workspace": {
+    "window_snapping": true,
+    "hot_corners": "overview",
+    "focus_follows_mouse": false,
+    "workspace_count": "4",
+    "workspace_animations": true,
+    "notifications_timeout": "5",
+    "do_not_disturb": false
+  },
+  "network": {
+    "ethernet_mode": "dhcp",
+    "bluetooth_enabled": true,
+    "proxy_mode": "off"
+  },
+  "audio": {
+    "output": "usb-audio",
+    "input": "usb-microphone",
+    "echo_cancellation": true
+  },
+  "power": {
+    "profile": "balanced",
+    "lid_action": "suspend",
+    "idle_suspend": "15"
+  },
+  "privacy": {
+    "camera": true,
+    "microphone": true,
+    "location": false,
+    "screen_blank": "5",
+    "password_on_resume": true,
+    "firewall": true
+  },
+  "apps": {
+    "default_browser": "firefox",
+    "default_mail": "thunderbird",
+    "default_video": "mpv"
+  },
+  "terminal": {
+    "font_family": "Hack",
+    "font_size": 13,
+    "scrollback_lines": 10000,
+    "cursor_blink": true,
+    "cursor_shape": "block",
+    "audible_bell": false,
+    "allow_hyperlinks": true,
+    "opacity": 0.95
+  },
+  "region": {
+    "locale": "pl_PL"
+  },
+  "workspaces": {
+    "labels": ["1", "2", "3", "4", "5"]
+  }
+}

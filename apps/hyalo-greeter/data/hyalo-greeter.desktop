@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Hyalo Greeter
+Comment=LightDM greeter for HyaloOS
+Exec=hyalo-greeter
+Type=Application

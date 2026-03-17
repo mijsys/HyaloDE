@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Panel
+Comment=Panel and launcher for HyaloOS
+Exec=hyalo-panel
+Icon=hyalo-panel
+Terminal=false
+NoDisplay=true
+Categories=System;
+Keywords=panel;launcher;hyalo;desktop;
+StartupNotify=false

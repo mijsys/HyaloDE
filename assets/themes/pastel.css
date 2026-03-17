@@ -1,0 +1,49 @@
+/*
+ * Hyalo — Pastel Flat theme tokens
+ * Redesigned for a clean, modern flat aesthetic.
+ * No glassmorphism; sharp surfaces, intentional contrast, warm neutrals.
+ */
+
+/* ── Backgrounds ─────────────────────────────────────────────────────────── */
+@define-color hyalo_bg_desktop        #edeae6;
+@define-color hyalo_bg_window         #f9f6f3;
+@define-color hyalo_bg_panel          #dff0eb;
+@define-color hyalo_bg_card           #f5f1ee;
+@define-color hyalo_bg_card_alt       #ede8e4;
+@define-color hyalo_bg_raised         #e8e3df;
+@define-color hyalo_bg_hover          #ddd5d9;
+@define-color hyalo_bg_pressed        #d0c8cc;
+@define-color hyalo_bg_input          #faf8f6;
+
+/* ── Accent ──────────────────────────────────────────────────────────────── */
+@define-color hyalo_accent            #7ec8b4;
+@define-color hyalo_accent_strong     #59b89f;
+@define-color hyalo_accent_contrast   #0e2b25;
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+@define-color hyalo_text_main         #1e2c33;
+@define-color hyalo_text_secondary    #5a6e75;
+@define-color hyalo_text_muted        #8a9ca2;
+
+/* ── Borders ─────────────────────────────────────────────────────────────── */
+@define-color hyalo_border            #ccd8d4;
+@define-color hyalo_border_strong     #afc5bf;
+@define-color hyalo_panel_border      #c4d8d2;
+@define-color hyalo_focus_ring        #7ec8b4;
+
+/* ── Semantic states ─────────────────────────────────────────────────────── */
+@define-color hyalo_success           #c6e8de;
+@define-color hyalo_success_text      #0e2b25;
+@define-color hyalo_danger            #f5d9d5;
+@define-color hyalo_danger_text       #6e3630;
+
+/* ── Shadows (flat: subtle, single-layer) ────────────────────────────────── */
+@define-color hyalo_shadow_panel      alpha(#2a2420, 0.10);
+@define-color hyalo_shadow_menu       alpha(#1e1a16, 0.12);
+@define-color hyalo_shadow_modal      alpha(#1a1612, 0.14);
+
+/* ── Overlays (kept minimal — no glass) ──────────────────────────────────── */
+@define-color hyalo_overlay_subtle    alpha(#ffffff, 0.40);
+@define-color hyalo_overlay_soft      alpha(#ffffff, 0.60);
+@define-color hyalo_overlay_strong    alpha(#ffffff, 0.80);
+@define-color hyalo_scrim             alpha(#1a1612, 0.50);

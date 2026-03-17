@@ -1,0 +1,321 @@
+/*
+ * Hyalo Greeter — Login screen stylesheet
+ *
+ * Uses the same visual language as the Hyalo desktop:
+ * dark surfaces, soft glow, mint accent, Manrope typeface.
+ *
+ * Token palette (hardcoded — greeter runs before user config):
+ *   bg:        #11161d → #1c2530
+ *   card:      #1f2935
+ *   accent:    #7fd6ba
+ *   text:      #edf3fa / #b3c1d1
+ *   border:    rgba(255,255,255,0.11)
+ */
+
+/* ── Window & background ── */
+
+.greeter-window {
+    background-color: #11161d;
+}
+
+.greeter-background {
+    background: linear-gradient(180deg, #11161d 0%, #0d1117 100%);
+}
+
+.greeter-wallpaper {
+    opacity: 0.35;
+}
+
+.greeter-content {
+    background: transparent;
+}
+
+/* ── Clock ── */
+
+.greeter-clock-area {
+    margin-bottom: 16px;
+}
+
+.greeter-clock {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    color: #edf3fa;
+    text-shadow: 0 2px 24px rgba(127, 214, 186, 0.10);
+}
+
+.greeter-date {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: rgba(179, 193, 209, 0.85);
+    text-transform: capitalize;
+}
+
+/* ── Login card ── */
+
+.greeter-card {
+    background-color: rgba(31, 41, 53, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 12px 0;
+    box-shadow:
+        0 8px 40px rgba(4, 7, 13, 0.45),
+        0 1px 3px rgba(4, 7, 13, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    min-width: 380px;
+}
+
+/* ── User list (multi-user) ── */
+
+.greeter-user-list {
+    padding: 8px 4px;
+}
+
+.greeter-user-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 0;
+    transition: background 150ms ease-out, border-color 150ms ease-out;
+}
+
+.greeter-user-btn:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.greeter-user-btn:active {
+    background-color: rgba(127, 214, 186, 0.10);
+}
+
+.greeter-user-row {
+    padding: 8px 0;
+}
+
+.greeter-user-row-avatar {
+    border-radius: 999px;
+    background-color: rgba(43, 55, 70, 0.80);
+    min-width: 36px;
+    min-height: 36px;
+}
+
+.greeter-user-row-name {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #edf3fa;
+}
+
+/* ── Avatar ── */
+
+.greeter-user-area {
+    padding: 0 32px;
+}
+
+.greeter-avatar {
+    border-radius: 999px;
+    background-color: rgba(43, 55, 70, 0.80);
+    border: 2px solid rgba(127, 214, 186, 0.25);
+    padding: 6px;
+    min-width: 80px;
+    min-height: 80px;
+    box-shadow:
+        0 4px 16px rgba(127, 214, 186, 0.08),
+        0 0 0 4px rgba(127, 214, 186, 0.04);
+    transition: border-color 250ms ease-out, box-shadow 250ms ease-out;
+    color: rgba(237, 243, 250, 0.5);
+}
+
+.greeter-username {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #edf3fa;
+    letter-spacing: 0.01em;
+}
+
+/* ── Auth area ── */
+
+.greeter-auth-area {
+    padding: 0 32px 0 32px;
+}
+
+.greeter-password-row {
+    border-spacing: 8px;
+}
+
+.greeter-password,
+.greeter-password text {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 14px;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background-color: rgba(32, 42, 54, 0.90);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: #edf3fa;
+    caret-color: #7fd6ba;
+    transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+.greeter-password:focus-within {
+    border-color: rgba(127, 214, 186, 0.50);
+    box-shadow: 0 0 0 3px rgba(127, 214, 186, 0.12);
+    outline: none;
+}
+
+.greeter-password image {
+    color: rgba(179, 193, 209, 0.50);
+}
+
+.greeter-login-btn {
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7fd6ba 0%, #62c5a6 100%);
+    border: none;
+    color: #0f2a22;
+    box-shadow:
+        0 2px 8px rgba(127, 214, 186, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: background 150ms ease-out, box-shadow 150ms ease-out, transform 100ms;
+}
+
+.greeter-login-btn:hover {
+    box-shadow:
+        0 3px 14px rgba(127, 214, 186, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.greeter-login-btn:active {
+    transform: scale(0.96);
+    box-shadow:
+        0 1px 4px rgba(127, 214, 186, 0.16);
+}
+
+/* ── Messages ── */
+
+.greeter-message {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    min-height: 16px;
+}
+
+.greeter-error {
+    color: #ff9b9b;
+}
+
+.greeter-info {
+    color: rgba(179, 193, 209, 0.85);
+}
+
+/* ── Session selector ── */
+
+.greeter-session-area {
+    padding: 0 32px;
+    border-spacing: 8px;
+}
+
+.greeter-session-label {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(179, 193, 209, 0.70);
+    letter-spacing: 0.04em;
+}
+
+.greeter-session-combo {
+    font-family: "Manrope", "Inter", sans-serif;
+    font-size: 12px;
+    min-height: 32px;
+    border-radius: 10px;
+    background-color: rgba(32, 42, 54, 0.70);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #edf3fa;
+    padding: 0 10px;
+}
+
+.greeter-session-combo:hover {
+    background-color: rgba(32, 42, 54, 0.90);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.greeter-session-combo button {
+    background: transparent;
+    border: none;
+    min-height: 32px;
+    padding: 0 6px;
+}
+
+.greeter-session-combo popover contents {
+    background-color: rgba(31, 41, 53, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 6px 24px rgba(4, 7, 13, 0.40);
+}
+
+.greeter-session-combo row {
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 120ms ease-out;
+}
+
+.greeter-session-combo row:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.greeter-session-combo row:selected {
+    background-color: rgba(127, 214, 186, 0.14);
+}
+
+/* ── Power buttons ── */
+
+.greeter-power-area {
+    border-spacing: 16px;
+}
+
+.greeter-power-btn {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 999px;
+    background-color: rgba(31, 41, 53, 0.60);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(237, 243, 250, 0.70);
+    transition: background 150ms ease-out, color 150ms ease-out,
+                border-color 150ms ease-out, box-shadow 150ms ease-out;
+    box-shadow: 0 2px 8px rgba(4, 7, 13, 0.20);
+}
+
+.greeter-power-btn:hover {
+    background-color: rgba(43, 55, 70, 0.85);
+    color: #edf3fa;
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 3px 12px rgba(4, 7, 13, 0.30);
+}
+
+.greeter-power-btn:active {
+    transform: scale(0.94);
+}
+
+.greeter-power-shutdown:hover {
+    background-color: rgba(114, 70, 74, 0.70);
+    border-color: rgba(255, 155, 155, 0.20);
+    color: #ff9b9b;
+}
+
+.greeter-power-restart:hover {
+    background-color: rgba(70, 100, 114, 0.70);
+    border-color: rgba(127, 214, 186, 0.20);
+    color: #7fd6ba;
+}
+
+.greeter-power-suspend:hover {
+    background-color: rgba(100, 90, 60, 0.70);
+    border-color: rgba(255, 215, 130, 0.20);
+    color: #ffd782;
+}

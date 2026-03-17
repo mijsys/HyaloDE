@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Hyalo Icons
+Comment=Colorful line-art icons for HyaloOS
+Inherits=Adwaita,hicolor
+Directories=scalable/apps
+
+[scalable/apps]
+Size=256
+MinSize=16
+MaxSize=1024
+Type=Scalable
+Context=Applications

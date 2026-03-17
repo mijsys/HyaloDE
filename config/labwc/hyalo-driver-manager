@@ -1,0 +1,232 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+INTERACTIVE=0
+if [[ "${1:-}" == "--interactive" ]]; then
+  INTERACTIVE=1
+  shift
+fi
+
+log() {
+  printf '%s\n' "$*"
+}
+
+fail() {
+  printf 'Error: %s\n' "$*" >&2
+  exit 1
+}
+
+require_root() {
+  if [[ ${EUID} -eq 0 ]]; then
+    return
+  fi
+
+  if ! command -v sudo >/dev/null 2>&1; then
+    fail "sudo is required to install GPU drivers."
+  fi
+
+  local -a forward_args=()
+  if [[ ${INTERACTIVE} -eq 1 ]]; then
+    forward_args+=("--interactive")
+  fi
+
+  log "This operation requires administrator privileges."
+  exec sudo -k "$0" "${forward_args[@]}"
+}
+
+detect_pkg_manager() {
+  if command -v pacman >/dev/null 2>&1; then
+    printf 'pacman'
+    return
+  fi
+  if command -v apt-get >/dev/null 2>&1; then
+    printf 'apt'
+    return
+  fi
+  if command -v dnf >/dev/null 2>&1; then
+    printf 'dnf'
+    return
+  fi
+  if command -v zypper >/dev/null 2>&1; then
+    printf 'zypper'
+    return
+  fi
+
+  printf 'unknown'
+}
+
+detect_gpu_vendors() {
+  local probe
+  if command -v lspci >/dev/null 2>&1; then
+    probe="$(lspci -nnk 2>/dev/null | grep -Ei 'VGA|3D|Display' || true)"
+  else
+    probe="$(grep -H . /sys/class/drm/card*/device/vendor 2>/dev/null || true)"
+  fi
+
+  local vendors=()
+  if grep -Eiq 'nvidia|10de' <<<"$probe"; then
+    vendors+=("nvidia")
+  fi
+  if grep -Eiq 'amd|advanced micro devices|1002' <<<"$probe"; then
+    vendors+=("amd")
+  fi
+  if grep -Eiq 'intel|8086' <<<"$probe"; then
+    vendors+=("intel")
+  fi
+
+  if [[ ${#vendors[@]} -eq 0 ]]; then
+    vendors+=("unknown")
+  fi
+
+  printf '%s\n' "${vendors[@]}"
+}
+
+contains_vendor() {
+  local wanted=$1
+  shift
+  local candidate
+  for candidate in "$@"; do
+    if [[ "$candidate" == "$wanted" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+install_for_pacman() {
+  local -a vendors=("$@")
+  local -a packages=(mesa vulkan-icd-loader)
+
+  if contains_vendor nvidia "${vendors[@]}"; then
+    packages+=(nvidia-dkms nvidia-utils nvidia-settings)
+  fi
+  if contains_vendor amd "${vendors[@]}"; then
+    packages+=(vulkan-radeon)
+  fi
+  if contains_vendor intel "${vendors[@]}"; then
+    packages+=(vulkan-intel)
+  fi
+
+  log "Installing latest GPU stack with pacman..."
+  pacman -Syu --needed "${packages[@]}"
+}
+
+install_for_apt() {
+  local -a vendors=("$@")
+
+  log "Refreshing apt package index..."
+  apt-get update
+
+  if contains_vendor nvidia "${vendors[@]}" && command -v ubuntu-drivers >/dev/null 2>&1; then
+    log "Installing recommended NVIDIA driver via ubuntu-drivers..."
+    ubuntu-drivers autoinstall
+  else
+    local -a packages=(mesa-vulkan-drivers)
+    if contains_vendor nvidia "${vendors[@]}"; then
+      packages+=(nvidia-driver)
+    fi
+    log "Installing latest GPU stack with apt..."
+    DEBIAN_FRONTEND=noninteractive apt-get install -y "${packages[@]}"
+  fi
+}
+
+install_for_dnf() {
+  local -a vendors=("$@")
+  local -a packages=(mesa-dri-drivers mesa-vulkan-drivers)
+
+  if contains_vendor nvidia "${vendors[@]}"; then
+    packages+=(akmod-nvidia xorg-x11-drv-nvidia-cuda)
+  fi
+
+  log "Installing latest GPU stack with dnf..."
+  dnf -y upgrade --refresh
+  dnf -y install "${packages[@]}"
+}
+
+install_for_zypper() {
+  local -a vendors=("$@")
+  local -a packages=(Mesa-dri Mesa-vulkan-device-select)
+
+  if contains_vendor nvidia "${vendors[@]}"; then
+    packages+=(nvidia-video-G06)
+  fi
+
+  log "Installing latest GPU stack with zypper..."
+  zypper --non-interactive refresh
+  zypper --non-interactive update
+  zypper --non-interactive install --auto-agree-with-licenses "${packages[@]}"
+}
+
+restart_required() {
+  local -a vendors=("$@")
+
+  if contains_vendor nvidia "${vendors[@]}"; then
+    return 0
+  fi
+
+  if [[ -f /var/run/reboot-required ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+main() {
+  local pkg_manager
+  pkg_manager="$(detect_pkg_manager)"
+  if [[ "$pkg_manager" == "unknown" ]]; then
+    fail "Unsupported distribution. No known package manager found."
+  fi
+
+  mapfile -t vendors < <(detect_gpu_vendors)
+
+  log "Detected GPU vendors: ${vendors[*]}"
+  log "Package manager: ${pkg_manager}"
+
+  require_root
+
+  if [[ ${INTERACTIVE} -eq 1 ]]; then
+    printf 'Continue with driver installation? [y/N]: '
+    read -r answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+      log "Canceled."
+      exit 0
+    fi
+  fi
+
+  case "$pkg_manager" in
+    pacman)
+      install_for_pacman "${vendors[@]}"
+      ;;
+    apt)
+      install_for_apt "${vendors[@]}"
+      ;;
+    dnf)
+      install_for_dnf "${vendors[@]}"
+      ;;
+    zypper)
+      install_for_zypper "${vendors[@]}"
+      ;;
+    *)
+      fail "Unsupported package manager: ${pkg_manager}"
+      ;;
+  esac
+
+  log "Driver installation finished."
+
+  if restart_required "${vendors[@]}"; then
+    log "A system restart is recommended to apply graphics driver changes."
+    if [[ ${INTERACTIVE} -eq 1 ]]; then
+      printf 'Restart now? [y/N]: '
+      read -r reboot_answer
+      if [[ "$reboot_answer" =~ ^[Yy]$ ]]; then
+        reboot
+      fi
+    fi
+  else
+    log "Restart is not required right now."
+  fi
+}
+
+main "$@"

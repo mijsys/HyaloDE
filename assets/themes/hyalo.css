@@ -1,0 +1,41 @@
+/*
+ * Hyalo theme tokens (default modern look)
+ * Balanced dark palette with high contrast and soft mint accent.
+ */
+
+@define-color hyalo_bg_desktop #11161d;
+@define-color hyalo_bg_window #171e27;
+@define-color hyalo_bg_panel #1c2530;
+@define-color hyalo_bg_card #1f2935;
+@define-color hyalo_bg_card_alt #263240;
+@define-color hyalo_bg_raised #2b3746;
+@define-color hyalo_bg_hover #334153;
+@define-color hyalo_bg_pressed #3a4a5f;
+@define-color hyalo_bg_input #202a36;
+
+@define-color hyalo_accent #7fd6ba;
+@define-color hyalo_accent_strong #62c5a6;
+@define-color hyalo_accent_contrast #0f2a22;
+
+@define-color hyalo_text_main #edf3fa;
+@define-color hyalo_text_secondary #b3c1d1;
+@define-color hyalo_text_muted #90a1b4;
+
+@define-color hyalo_border alpha(#ffffff, 0.11);
+@define-color hyalo_border_strong alpha(#ffffff, 0.18);
+@define-color hyalo_panel_border alpha(#ffffff, 0.13);
+@define-color hyalo_focus_ring alpha(#9ee8cf, 0.42);
+
+@define-color hyalo_success #cde9df;
+@define-color hyalo_success_text #10271f;
+@define-color hyalo_danger #72464a;
+@define-color hyalo_danger_text #ffe7e3;
+
+@define-color hyalo_shadow_panel alpha(#05080f, 0.26);
+@define-color hyalo_shadow_menu alpha(#05080f, 0.30);
+@define-color hyalo_shadow_modal alpha(#04070d, 0.34);
+
+@define-color hyalo_overlay_subtle alpha(#ffffff, 0.04);
+@define-color hyalo_overlay_soft alpha(#ffffff, 0.07);
+@define-color hyalo_overlay_strong alpha(#ffffff, 0.10);
+@define-color hyalo_scrim alpha(#04070d, 0.58);               

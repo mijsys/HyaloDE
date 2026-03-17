@@ -1,0 +1,9 @@
+[submodule "compositor/hyalo-compositor"]
+	path = compositor/hyalo-compositor
+	url = https://github.com/labwc/labwc.git
+[submodule "third_party/wayland-protocols"]
+	path = third_party/wayland-protocols
+	url = https://github.com/wayland-mirror/wayland-protocols.git
+[submodule "third_party/wlr-protocols"]
+	path = third_party/wlr-protocols
+	url = https://github.com/swaywm/wlr-protocols.git

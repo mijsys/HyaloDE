@@ -1,0 +1,152 @@
+#!/bin/sh
+
+set -eu
+
+mode=${1:-full}
+
+config_language() {
+    local config_path="${XDG_CONFIG_HOME:-$HOME/.config}/hyalo/config.json"
+    if [ -f "$config_path" ] && command -v python3 >/dev/null 2>&1; then
+        python3 - "$config_path" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+try:
+    with open(path, 'r', encoding='utf-8') as handle:
+        data = json.load(handle)
+except Exception:
+    print('pl')
+    raise SystemExit(0)
+
+language = data.get('language', 'pl')
+print(language if isinstance(language, str) and language else 'pl')
+PY
+        return
+    fi
+
+    printf 'pl\n'
+}
+
+resolve_locale_file() {
+    local lang="$1"
+    local user_locale="${XDG_CONFIG_HOME:-$HOME/.config}/hyalo/locales/${lang}.json"
+    local install_locale="/usr/share/hyalo/locales/${lang}.json"
+    local fallback_locale="/usr/local/share/hyalo/locales/${lang}.json"
+
+    if [ -f "$user_locale" ]; then
+        printf '%s\n' "$user_locale"
+        return
+    fi
+
+    if [ -f "$install_locale" ]; then
+        printf '%s\n' "$install_locale"
+        return
+    fi
+
+    if [ -f "$fallback_locale" ]; then
+        printf '%s\n' "$fallback_locale"
+        return
+    fi
+
+    printf '\n'
+}
+
+translate() {
+    local key="$1"
+    local fallback="$2"
+    local lang="$3"
+    local locale_file
+    locale_file=$(resolve_locale_file "$lang")
+
+    if [ -n "$locale_file" ] && command -v python3 >/dev/null 2>&1; then
+        local resolved
+        resolved=$(python3 - "$locale_file" "$key" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+key = sys.argv[2]
+
+try:
+    with open(path, 'r', encoding='utf-8') as handle:
+        data = json.load(handle)
+except Exception:
+    print('')
+    raise SystemExit(0)
+
+value = data.get(key, '')
+print(value if isinstance(value, str) else '')
+PY
+)
+        if [ -n "$resolved" ]; then
+            printf '%s\n' "$resolved"
+            return
+        fi
+    fi
+
+    printf '%s\n' "$fallback"
+}
+
+language=$(config_language)
+ss_title=$(translate "ss_title" "HyaloOS Screenshot" "$language")
+ss_missing_grim=$(translate "ss_missing_grim" "Missing grim. Install grim to take screenshots." "$language")
+ss_missing_slurp=$(translate "ss_missing_slurp" "Missing slurp. Install slurp to capture selected area." "$language")
+ss_save_full_failed=$(translate "ss_save_full_failed" "Could not save full screenshot." "$language")
+ss_save_area_failed=$(translate "ss_save_area_failed" "Could not save area screenshot." "$language")
+ss_unknown_mode=$(translate "ss_unknown_mode" "Unknown screenshot mode" "$language")
+ss_saved_prefix=$(translate "ss_saved_prefix" "Saved:" "$language")
+
+notify() {
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "$@"
+    fi
+}
+
+fail() {
+    message=$1
+    printf '%s\n' "$message" >&2
+    notify "$ss_title" "$message"
+    exit 1
+}
+
+if ! command -v grim >/dev/null 2>&1; then
+    fail "$ss_missing_grim"
+fi
+
+if command -v xdg-user-dir >/dev/null 2>&1; then
+    pictures_dir=$(xdg-user-dir PICTURES 2>/dev/null || true)
+else
+    pictures_dir=
+fi
+
+if [ -z "$pictures_dir" ] || [ "$pictures_dir" = "$HOME" ]; then
+    pictures_dir="${HOME}/Pictures"
+fi
+
+target_dir="${pictures_dir}/Screenshots"
+mkdir -p "$target_dir"
+
+timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+target_path="${target_dir}/HyaloOS_${timestamp}.png"
+
+case "$mode" in
+    full)
+        grim "$target_path" || fail "$ss_save_full_failed"
+        ;;
+    area)
+        if ! command -v slurp >/dev/null 2>&1; then
+            fail "$ss_missing_slurp"
+        fi
+
+        region=$(slurp) || exit 0
+        [ -n "$region" ] || exit 0
+        grim -g "$region" "$target_path" || fail "$ss_save_area_failed"
+        ;;
+    *)
+        fail "$ss_unknown_mode: $mode"
+        ;;
+esac
+
+notify "$ss_title" "$ss_saved_prefix $target_path"
+printf '%s\n' "$target_path"

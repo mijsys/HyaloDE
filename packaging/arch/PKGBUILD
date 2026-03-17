@@ -1,0 +1,176 @@
+# Maintainer: MijSys <https://github.com/mijsys>
+pkgname=hyalode
+pkgver=0.2.2
+pkgrel=1
+pkgdesc="HyaloDE — Modern Wayland Desktop Environment"
+arch=('x86_64' 'aarch64')
+url="https://github.com/mijsys/HyaloDE"
+license=('MIT')
+depends=(
+    'gtkmm-4.0'
+    'gtk4-layer-shell'
+    'lightdm'
+    'liblightdm-gobject-1'
+    'vte4'
+    'gdk-pixbuf2'
+    'wayland'
+    'nlohmann-json'
+    'mako'
+    'swww'
+    'dex'
+    'grim'
+    'slurp'
+    'wl-clipboard'
+    'ttf-font-awesome'
+)
+makedepends=(
+    'cmake'
+    'meson'
+    'ninja'
+    'pkg-config'
+    'wayland-protocols'
+    'wlr-protocols'
+    'git'
+)
+optdepends=(
+    'hyalode-compositor: HyaloWM labwc-based compositor'
+    'sddm: Alternative display manager'
+    'nwg-look: GTK theme configuration'
+)
+provides=('hyalode')
+conflicts=('hyalode-git')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/mijsys/HyaloDE/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/HyaloDE-${pkgver}"
+
+    cmake -S . -B build \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DHYALO_BUILD_GREETER=ON \
+        -DHYALO_BUILD_TERMINAL=ON \
+        -DHYALO_BUILD_CONTROL_CENTER=ON \
+        -DHYALO_BUILD_UPDATE_CENTER=ON \
+        -DHYALO_BUILD_SOFTWARE_STORE=ON \
+        -DHYALO_BUILD_FILES=ON
+
+    cmake --build build
+}
+
+package() {
+    cd "${srcdir}/HyaloDE-${pkgver}"
+
+    DESTDIR="${pkgdir}" cmake --install build
+
+    # Session desktop entry
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/wayland-sessions/hyalo.desktop" <<EOF
+[Desktop Entry]
+Name=HyaloDE
+Comment=HyaloDE Wayland session
+Exec=/usr/libexec/hyalo/hyalo-session
+Icon=hyalo
+Type=Application
+DesktopNames=HyaloDE;HyaloWM;wlroots
+EOF
+
+    # LightDM greeter config
+    install -Dm644 apps/hyalo-greeter/data/lightdm-hyalo-greeter.conf \
+        "${pkgdir}/etc/lightdm/lightdm.conf.d/50-hyalo-greeter.conf"
+
+    # LightDM greeter desktop entry
+    install -Dm644 apps/hyalo-greeter/data/hyalo-greeter.desktop \
+        "${pkgdir}/usr/share/xgreeters/hyalo-greeter.desktop"
+
+    # labwc config
+    install -Dm644 config/labwc/rc.xml "${pkgdir}/usr/share/hyalo/labwc/rc.xml"
+    install -Dm755 config/labwc/hyalo-screenshot "${pkgdir}/usr/bin/hyalo-screenshot"
+    install -Dm755 config/labwc/hyalo-wallpaperd "${pkgdir}/usr/bin/hyalo-wallpaperd"
+    install -Dm755 config/labwc/hyalo-driver-manager "${pkgdir}/usr/bin/hyalo-driver-manager"
+
+    # Mako notification config
+    install -Dm644 config/mako/config "${pkgdir}/usr/share/hyalo/mako/config"
+
+    # Window decoration theme
+    install -Dm644 config/labwc/themes/HyaloOS/openbox-3/themerc \
+        "${pkgdir}/usr/share/themes/HyaloOS/openbox-3/themerc"
+    for svg_file in config/labwc/themes/HyaloOS/labwc/*.svg; do
+        [ -f "$svg_file" ] || continue
+        install -Dm644 "$svg_file" \
+            "${pkgdir}/usr/share/themes/HyaloOS/labwc/$(basename "$svg_file")"
+    done
+
+    # Session wrapper
+    install -Dm755 /dev/stdin "${pkgdir}/usr/libexec/hyalo/hyalo-session" <<'SESSIONEOF'
+#!/bin/sh
+set -eu
+PREFIX="/usr"
+PANEL_BIN="$PREFIX/bin/hyalo-panel"
+WALLPAPER_DAEMON_BIN="$PREFIX/bin/hyalo-wallpaperd"
+COMPOSITOR_BIN="$PREFIX/bin/labwc"
+RUNTIME_LIB_DIR="$PREFIX/lib/hyalo"
+LABWC_CONFIG_DIR="$PREFIX/share/hyalo/labwc"
+MAKO_DEFAULT_CONFIG="$PREFIX/share/hyalo/mako/config"
+
+prepend_prefix_path() {
+    candidate_dir=$1
+    [ -d "$candidate_dir" ] || return 0
+    if [ -n "${PATH:-}" ]; then
+        export PATH="$candidate_dir:${PATH}"
+    else
+        export PATH="$candidate_dir"
+    fi
+}
+
+add_prefix_library_path() {
+    candidate_dir=$1
+    [ -d "$candidate_dir" ] || return 0
+    if [ -n "${LD_LIBRARY_PATH:-}" ]; then
+        export LD_LIBRARY_PATH="$candidate_dir:${LD_LIBRARY_PATH}"
+    else
+        export LD_LIBRARY_PATH="$candidate_dir"
+    fi
+}
+
+add_prefix_library_path "$RUNTIME_LIB_DIR"
+add_prefix_library_path "$PREFIX/lib"
+add_prefix_library_path "$PREFIX/lib64"
+prepend_prefix_path "$PREFIX/bin"
+
+[ -z "${GSK_RENDERER:-}" ] && export GSK_RENDERER="gl"
+[ -z "${GDK_DISABLE:-}" ] && export GDK_DISABLE="vulkan"
+
+if [ -n "${XDG_CURRENT_DESKTOP:-}" ]; then
+    export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP}:HyaloDE"
+else
+    export XDG_CURRENT_DESKTOP="HyaloDE"
+fi
+export XDG_SESSION_DESKTOP="HyaloDE"
+
+SESSION_STARTUP='
+PANEL_LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/hyalo"; mkdir -p "$PANEL_LOG_DIR"
+PANEL_LOG_FILE="$PANEL_LOG_DIR/panel.log"
+if [ -x "'"$PANEL_BIN"'" ]; then
+    ( delay=1; while :; do "'"$PANEL_BIN"'" >>"$PANEL_LOG_FILE" 2>&1; ec=$?; printf "[%s] hyalo-panel exited %s, restart in %ss\n" "$(date +"%F %T")" "$ec" "$delay" >>"$PANEL_LOG_FILE"; sleep "$delay"; [ "$delay" -lt 8 ] && delay=$((delay * 2)); done ) &
+fi
+if command -v mako >/dev/null 2>&1 && ! pgrep -xu "$(id -u)" mako >/dev/null 2>&1; then
+    MAKO_CFG="${XDG_CONFIG_HOME:-$HOME/.config}/mako/config"
+    [ ! -f "$MAKO_CFG" ] && MAKO_CFG="'"$MAKO_DEFAULT_CONFIG"'"
+    [ -f "$MAKO_CFG" ] && mako --config "$MAKO_CFG" >/dev/null 2>&1 & || mako >/dev/null 2>&1 &
+fi
+command -v swww-daemon >/dev/null 2>&1 && ! swww query >/dev/null 2>&1 && swww-daemon >/dev/null 2>&1 &
+[ -x "'"$WALLPAPER_DAEMON_BIN"'" ] && HYALO_WALLPAPER_BACKEND="${HYALO_WALLPAPER_BACKEND:-auto}" "'"$WALLPAPER_DAEMON_BIN"'" --daemon >/dev/null 2>&1 &
+command -v dex >/dev/null 2>&1 && dex -a -e HyaloDE >/dev/null 2>&1 &
+'
+
+if [ -x "$COMPOSITOR_BIN" ]; then
+    exec "$COMPOSITOR_BIN" -C "$LABWC_CONFIG_DIR" -m -s "sh -lc '$SESSION_STARTUP'" "$@"
+fi
+exec labwc -C "$LABWC_CONFIG_DIR" -m -s "sh -lc '$SESSION_STARTUP'" "$@"
+SESSIONEOF
+
+    # License
+    if [ -f LICENSE ]; then
+        install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    fi
+}

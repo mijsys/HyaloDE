@@ -1,0 +1,74 @@
+# HyaloOS window decorations for HyaloWM/openbox-3 theme engine
+
+border.width: 1
+window.titlebar.padding.width: 10
+window.titlebar.padding.height: 7
+
+window.active.border.color: #c8d0d8
+window.inactive.border.color: #dde2e8
+
+window.active.title.bg: Flat Solid
+window.active.title.bg.color: #f6f7f9
+window.inactive.title.bg: Flat Solid
+window.inactive.title.bg.color: #eceff3
+
+window.active.label.text.color: #1f2a33
+window.inactive.label.text.color: #697683
+window.label.text.justify: Center
+
+window.button.width: 28
+window.button.height: 28
+window.button.spacing: 6
+window.button.hover.bg.color: #dfe6ee
+window.button.hover.bg.corner-radius: 14
+
+window.active.button.unpressed.image.color: #1f2a33
+window.inactive.button.unpressed.image.color: #6c7782
+
+window.active.shadow.size: 24
+window.inactive.shadow.size: 14
+window.active.shadow.color: #4a566628
+window.inactive.shadow.color: #4a566616
+
+menu.overlap.x: 0
+menu.overlap.y: 0
+menu.width.min: 20
+menu.width.max: 240
+menu.border.width: 1
+menu.border.color: #d4e1dc
+menu.items.bg.color: #fffaf7
+menu.items.text.color: #24313a
+menu.items.active.bg.color: #dbe9df
+menu.items.active.text.color: #22322f
+menu.items.padding.x: 8
+menu.items.padding.y: 5
+menu.separator.width: 1
+menu.separator.padding.width: 8
+menu.separator.padding.height: 4
+menu.separator.color: #dde7e3
+menu.title.bg.color: #f4efef
+menu.title.text.color: #24313a
+menu.title.text.justify: Center
+
+osd.bg.color: #fffaf7
+osd.border.color: #d4e1dc
+osd.border.width: 1
+osd.label.text.color: #24313a
+
+osd.window-switcher.style-classic.item.active.border.width: 1
+osd.window-switcher.style-classic.item.active.border.color: #b9d2c7
+osd.window-switcher.style-classic.item.active.bg.color: #dbe9df
+
+osd.window-switcher.style-thumbnail.item.active.border.width: 1
+osd.window-switcher.style-thumbnail.item.active.border.color: #b9d2c7
+osd.window-switcher.style-thumbnail.item.active.bg.color: #dbe9df
+
+osd.window-switcher.preview.border.width: 1
+osd.window-switcher.preview.border.color: #d4e1dc
+
+snapping.overlay.region.bg.color: #c6ddd260
+snapping.overlay.edge.bg.color: #c6ddd260
+snapping.overlay.region.border.width: 1
+snapping.overlay.edge.border.width: 1
+snapping.overlay.region.border.color: #9dbbab
+snapping.overlay.edge.border.color: #9dbbab

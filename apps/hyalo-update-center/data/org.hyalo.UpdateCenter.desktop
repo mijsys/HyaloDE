@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Update Center
+Comment=Manage system updates for HyaloOS
+Exec=hyalo-update-center
+Icon=hyalo-update-center
+Terminal=false
+Categories=System;Settings;GTK;
+Keywords=updates;pacman;flatpak;aur;hyalo;
+StartupNotify=true

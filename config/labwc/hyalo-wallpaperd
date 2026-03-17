@@ -1,0 +1,869 @@
+#!/usr/bin/env python3
+
+import argparse
+import datetime as dt
+import fcntl
+import json
+import shutil
+import os
+import pathlib
+import random
+import re
+import signal
+import subprocess
+import sys
+import time
+import urllib.parse
+
+
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".jxl", ".bmp"}
+
+
+def env_flag(name: str) -> bool:
+    value = os.environ.get(name, "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def xdg_config_home() -> pathlib.Path:
+    value = os.environ.get("XDG_CONFIG_HOME")
+    if value:
+        return pathlib.Path(value)
+    return pathlib.Path.home() / ".config"
+
+
+def xdg_cache_home() -> pathlib.Path:
+    value = os.environ.get("XDG_CACHE_HOME")
+    if value:
+        return pathlib.Path(value)
+    return pathlib.Path.home() / ".cache"
+
+
+def config_dir() -> pathlib.Path:
+    return xdg_config_home() / "hyalo"
+
+
+def config_path() -> pathlib.Path:
+    return config_dir() / "config.json"
+
+
+def state_dir() -> pathlib.Path:
+    return xdg_cache_home() / "hyalo"
+
+
+def state_path() -> pathlib.Path:
+    return state_dir() / "wallpaperd-state.json"
+
+
+def lock_path() -> pathlib.Path:
+    return state_dir() / "wallpaperd.lock"
+
+
+def runtime_dir() -> pathlib.Path:
+    value = os.environ.get("XDG_RUNTIME_DIR")
+    if value:
+        return pathlib.Path(value)
+    return pathlib.Path("/tmp")
+
+
+def hyalo_runtime_dir() -> pathlib.Path:
+    return runtime_dir() / "hyalo"
+
+
+def hyalo_command_path() -> pathlib.Path:
+    return hyalo_runtime_dir() / "window-commands-v1.tsv"
+
+
+def hyalo_capabilities_path() -> pathlib.Path:
+    return hyalo_runtime_dir() / "capabilities-v1.tsv"
+
+
+def user_local_bin(name: str) -> pathlib.Path:
+    return pathlib.Path.home() / ".local" / "bin" / name
+
+
+def read_config() -> dict:
+    try:
+        return json.loads(config_path().read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def write_state(state: dict) -> None:
+    state_dir().mkdir(parents=True, exist_ok=True)
+    state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def read_state() -> dict:
+    try:
+        return json.loads(state_path().read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def wallpaper_roots() -> list[pathlib.Path]:
+    home = pathlib.Path.home()
+    return [
+        config_dir() / "wallpapers",
+        home / "Pictures" / "Wallpapers",
+        home / ".local" / "share" / "backgrounds",
+        home / "Pictures",
+        pathlib.Path("/usr/share/backgrounds"),
+        pathlib.Path("/usr/share/wallpapers"),
+    ]
+
+
+def collect_wallpapers() -> list[pathlib.Path]:
+    items: list[pathlib.Path] = []
+    seen: set[str] = set()
+
+    for root in wallpaper_roots():
+        if not root.is_dir():
+            continue
+
+        try:
+            iterator = root.rglob("*")
+            for entry in iterator:
+                if not entry.is_file():
+                    continue
+                if entry.suffix.lower() not in IMAGE_EXTENSIONS:
+                    continue
+                if "/Screenshots/" in entry.as_posix():
+                    continue
+
+                resolved = str(entry.resolve())
+                if resolved in seen:
+                    continue
+                seen.add(resolved)
+                items.append(pathlib.Path(resolved))
+        except Exception:
+            continue
+
+    items.sort()
+    return items
+
+
+def wallpaper_binary() -> str | None:
+    override = os.environ.get("HYALO_WALLPAPER_BIN", "").strip()
+    if override:
+        return override if pathlib.Path(override).is_file() else None
+
+    user_local = user_local_bin("hyalo-wallpaper")
+    if user_local.is_file():
+        return str(user_local)
+
+    return shutil.which("hyalo-wallpaper")
+
+
+def swww_binary() -> str | None:
+    override = os.environ.get("HYALO_SWWW_BIN", "").strip()
+    if override:
+        return override if pathlib.Path(override).is_file() else None
+
+    user_local = user_local_bin("swww")
+    if user_local.is_file():
+        return str(user_local)
+
+    return shutil.which("swww")
+
+
+def swww_daemon_binary() -> str | None:
+    override = os.environ.get("HYALO_SWWW_DAEMON_BIN", "").strip()
+    if override:
+        return override if pathlib.Path(override).is_file() else None
+
+    user_local = user_local_bin("swww-daemon")
+    if user_local.is_file():
+        return str(user_local)
+
+    return shutil.which("swww-daemon")
+
+
+def ensure_swww_daemon() -> bool:
+    swww = swww_binary()
+    daemon = swww_daemon_binary()
+    if not swww or not daemon:
+        return False
+
+    try:
+        status = subprocess.run(
+            [swww, "query"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            timeout=4,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    if status.returncode == 0:
+        return True
+
+    try:
+        subprocess.Popen(
+            [daemon],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        return False
+
+    deadline = time.monotonic() + 2.5
+    while time.monotonic() < deadline:
+        try:
+            ready = subprocess.run(
+                [swww, "query"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                check=False,
+                timeout=3,
+            )
+            if ready.returncode == 0:
+                return True
+        except (OSError, subprocess.SubprocessError):
+            return False
+        time.sleep(0.1)
+
+    return False
+
+
+def set_swww_wallpaper(path: pathlib.Path, output_name: str | None = None) -> bool:
+    if not path.is_file():
+        return False
+
+    swww = swww_binary()
+    if not swww or not ensure_swww_daemon():
+        return False
+
+    command = [
+        swww,
+        "img",
+        str(path.resolve()),
+        "--transition-type",
+        "none",
+        "--resize",
+        "crop",
+    ]
+    if output_name:
+        command.extend(["-o", output_name])
+
+    try:
+        result = subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    return result.returncode == 0
+
+
+def compositor_wallpaper_enabled() -> bool:
+    if env_flag("HYALO_WALLPAPER_FORCE_COMPOSITOR"):
+        return True
+
+    value = os.environ.get("HYALO_WALLPAPER_FORCE_RENDERER", "").strip().lower()
+    return value not in {"1", "true", "yes", "on"}
+
+
+def force_compositor_backend() -> bool:
+    if env_flag("HYALO_WALLPAPER_FORCE_COMPOSITOR"):
+        return True
+
+    backend = os.environ.get("HYALO_WALLPAPER_BACKEND", "").strip().lower()
+    return backend == "compositor"
+
+
+def compositor_supports_wallpaper() -> bool:
+    capabilities = hyalo_capabilities_path()
+    try:
+        for line in capabilities.read_text(encoding="utf-8").splitlines():
+            parts = line.split("\t", 1)
+            if len(parts) == 2 and parts[0] == "wallpaper" and parts[1] == "1":
+                return True
+    except OSError:
+        return False
+
+    return False
+
+
+def send_compositor_wallpaper_command(path: pathlib.Path | None, output_name: str | None = None) -> bool:
+    if not compositor_wallpaper_enabled() or not compositor_supports_wallpaper():
+        return False
+
+    hyalo_runtime_dir().mkdir(parents=True, exist_ok=True)
+    command_path = hyalo_command_path()
+    command = "clear-wallpaper\n"
+
+    if output_name:
+        if "\t" in output_name or "\n" in output_name:
+            return False
+        command = f"clear-wallpaper\t{output_name}\n"
+
+    if path is not None:
+        resolved = str(path.resolve())
+        if "\t" in resolved or "\n" in resolved:
+            return False
+        if output_name:
+            command = f"set-wallpaper\t{output_name}\t{resolved}\n"
+        else:
+            command = f"set-wallpaper\t{resolved}\n"
+
+    try:
+        with command_path.open("a", encoding="utf-8") as handle:
+            handle.write(command)
+    except OSError:
+        return False
+
+    return True
+
+
+def renderer_can_open(renderer: str, path: pathlib.Path) -> bool:
+    try:
+        result = subprocess.run(
+            [renderer, "--check", "--image", str(path.resolve())],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+    return result.returncode == 0
+
+
+def process_is_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def stop_previous_renderer(state: dict) -> None:
+    pid = state.get("renderer_pid")
+    if not isinstance(pid, int) or pid <= 0:
+        return
+    if not process_is_alive(pid):
+        return
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except OSError:
+        return
+
+    deadline = time.monotonic() + 3.0
+    while time.monotonic() < deadline:
+        if not process_is_alive(pid):
+            return
+        time.sleep(0.05)
+
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except OSError:
+        pass
+
+
+def sync_gsettings_wallpaper(path: pathlib.Path) -> None:
+    if subprocess.run(["sh", "-lc", "command -v gsettings >/dev/null 2>&1"], check=False).returncode != 0:
+        return
+
+    uri = pathlib.Path(path).resolve().as_uri()
+    commands = [
+        ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", uri],
+        ["gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", uri],
+        ["gsettings", "set", "org.gnome.desktop.background", "picture-options", "zoom"],
+    ]
+    for command in commands:
+        subprocess.run(command, check=False)
+
+
+def set_wallpaper(path: pathlib.Path) -> bool:
+    if not path.is_file():
+        return False
+
+    state = read_state()
+
+    if force_compositor_backend():
+        if send_compositor_wallpaper_command(path):
+            stop_previous_renderer(state)
+            state.pop("viewer_pid", None)
+            state.pop("renderer_pid", None)
+            state.pop("renderer_bin", None)
+            state["wallpaper_backend"] = "compositor"
+            sync_gsettings_wallpaper(path)
+            write_state(state)
+            return True
+
+    if set_swww_wallpaper(path):
+        stop_previous_renderer(state)
+        state.pop("viewer_pid", None)
+        state.pop("renderer_pid", None)
+        state.pop("renderer_bin", None)
+        state["wallpaper_backend"] = "swww"
+        sync_gsettings_wallpaper(path)
+        write_state(state)
+        return True
+
+    if send_compositor_wallpaper_command(path):
+        stop_previous_renderer(state)
+        state.pop("viewer_pid", None)
+        state.pop("renderer_pid", None)
+        state.pop("renderer_bin", None)
+        state["wallpaper_backend"] = "compositor"
+        sync_gsettings_wallpaper(path)
+        write_state(state)
+        return True
+
+    renderer = wallpaper_binary()
+    if not renderer:
+        return False
+
+    renderer_can_open(renderer, path)
+
+    process = subprocess.Popen(
+        [renderer, "--image", str(path.resolve())],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+    time.sleep(0.35)
+    if process.poll() is not None:
+        return False
+
+    stop_previous_renderer(state)
+
+    state.pop("viewer_pid", None)
+    state["renderer_pid"] = process.pid
+    state["renderer_bin"] = renderer
+    state["wallpaper_backend"] = "renderer"
+    sync_gsettings_wallpaper(path)
+    write_state(state)
+    return True
+
+
+def connected_outputs() -> list[str]:
+    try:
+        result = subprocess.run(
+            ["wlr-randr", "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+    if result.returncode != 0:
+        return []
+
+    try:
+        parsed = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return []
+
+    outputs: list[str] = []
+    seen: set[str] = set()
+
+    def parse_enabled(value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            return lowered in {"1", "true", "yes", "on", "enabled"}
+        return bool(value)
+
+    def maybe_add(item: object, fallback_name: str = "") -> None:
+        if not isinstance(item, dict):
+            return
+        name = item.get("name", fallback_name)
+        if not isinstance(name, str) or not name:
+            return
+        enabled = parse_enabled(item.get("enabled", item.get("active", True)))
+        if not enabled:
+            return
+        if name in seen:
+            return
+        seen.add(name)
+        outputs.append(name)
+
+    if isinstance(parsed, list):
+        for item in parsed:
+            maybe_add(item)
+    elif isinstance(parsed, dict):
+        outputs_node = parsed.get("outputs")
+        if isinstance(outputs_node, list):
+            for item in outputs_node:
+                maybe_add(item)
+        elif isinstance(outputs_node, dict):
+            for fallback_name, item in outputs_node.items():
+                maybe_add(item, fallback_name=str(fallback_name))
+        else:
+            for fallback_name, item in parsed.items():
+                maybe_add(item, fallback_name=str(fallback_name))
+
+    if outputs:
+        return outputs
+
+    # Fallback for systems where --json output is unavailable or limited.
+    try:
+        result = subprocess.run(
+            ["wlr-randr"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            text=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+    if result.returncode != 0:
+        return []
+
+    for raw_line in result.stdout.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if raw_line and raw_line[0].isspace():
+            continue
+
+        lowered = line.lower()
+        if lowered.startswith("output "):
+            line = line[7:].strip()
+            lowered = line.lower()
+
+        output_name = line.split(" ", 1)[0].rstrip(":")
+        if not output_name:
+            continue
+        if any(token in lowered for token in ("disconnected", "disabled", " off")):
+            continue
+        if output_name in seen:
+            continue
+        seen.add(output_name)
+        outputs.append(output_name)
+
+    return outputs
+
+
+def configured_wallpaper_per_output(config: dict) -> dict[str, pathlib.Path]:
+    appearance = config.get("appearance", {})
+    mapping = appearance.get("wallpaper_per_output", {})
+    if not isinstance(mapping, dict):
+        return {}
+
+    wallpapers: dict[str, pathlib.Path] = {}
+    for output_name, value in mapping.items():
+        if not isinstance(output_name, str) or not output_name:
+            continue
+        if not isinstance(value, str) or not value:
+            continue
+        wallpapers[output_name] = pathlib.Path(value)
+    return wallpapers
+
+
+def resolve_output_aliases(
+    wallpapers: dict[str, pathlib.Path], active_outputs: list[str]
+) -> dict[str, pathlib.Path]:
+    if not wallpapers:
+        return {}
+
+    if not active_outputs:
+        return dict(wallpapers)
+
+    resolved: dict[str, pathlib.Path] = {}
+    output_set = set(active_outputs)
+
+    # Keep explicit output mappings untouched.
+    for output_name, path in wallpapers.items():
+        if output_name in output_set:
+            resolved[output_name] = path
+
+    # Map UI fallback aliases (Display-1, Display-2, ...) to active outputs by index.
+    for output_name, path in wallpapers.items():
+        if output_name in resolved:
+            continue
+
+        match = re.fullmatch(r"display-(\d+)", output_name.strip(), flags=re.IGNORECASE)
+        if not match:
+            continue
+
+        index = int(match.group(1)) - 1
+        if index < 0 or index >= len(active_outputs):
+            continue
+
+        resolved.setdefault(active_outputs[index], path)
+
+    return resolved
+
+
+def set_wallpaper_per_output(wallpapers: dict[str, pathlib.Path], fallback_wallpaper: pathlib.Path | None = None) -> bool:
+    if not wallpapers:
+        return False
+
+    active_output_names = connected_outputs()
+    active_outputs = set(active_output_names)
+    resolved_wallpapers = resolve_output_aliases(wallpapers, active_output_names)
+    filtered: dict[str, pathlib.Path] = {}
+    for output_name, path in resolved_wallpapers.items():
+        if active_outputs and output_name not in active_outputs:
+            continue
+        if not path.is_file():
+            continue
+        filtered[output_name] = path
+
+    if not filtered:
+        return False
+
+    state = read_state()
+
+    if force_compositor_backend():
+        applied_outputs: set[str] = set()
+        success = False
+
+        for output_name, path in filtered.items():
+            if send_compositor_wallpaper_command(path, output_name=output_name):
+                success = True
+                applied_outputs.add(output_name)
+
+        if active_outputs and fallback_wallpaper and fallback_wallpaper.is_file():
+            for output_name in sorted(active_outputs):
+                if output_name in applied_outputs:
+                    continue
+                if send_compositor_wallpaper_command(fallback_wallpaper, output_name=output_name):
+                    success = True
+                    applied_outputs.add(output_name)
+
+        if success:
+            stop_previous_renderer(state)
+            state.pop("viewer_pid", None)
+            state.pop("renderer_pid", None)
+            state.pop("renderer_bin", None)
+            state["wallpaper_backend"] = "compositor"
+            state["last_wallpaper_per_output"] = {name: str(path) for name, path in filtered.items() if name in applied_outputs}
+            write_state(state)
+
+            first_path = next(iter(filtered.values()))
+            sync_gsettings_wallpaper(first_path)
+            return True
+
+    # Prefer the external wallpaper daemon backend to avoid compositor-side upload stalls.
+    swww_success = False
+    swww_applied_outputs: set[str] = set()
+    for output_name, path in filtered.items():
+        if set_swww_wallpaper(path, output_name=output_name):
+            swww_success = True
+            swww_applied_outputs.add(output_name)
+
+    if active_outputs and fallback_wallpaper and fallback_wallpaper.is_file():
+        for output_name in sorted(active_outputs):
+            if output_name in swww_applied_outputs:
+                continue
+            if set_swww_wallpaper(fallback_wallpaper, output_name=output_name):
+                swww_success = True
+                swww_applied_outputs.add(output_name)
+
+    if swww_success:
+        stop_previous_renderer(state)
+        state.pop("viewer_pid", None)
+        state.pop("renderer_pid", None)
+        state.pop("renderer_bin", None)
+        state["wallpaper_backend"] = "swww"
+        state["last_wallpaper_per_output"] = {name: str(path) for name, path in filtered.items() if name in swww_applied_outputs}
+        write_state(state)
+
+        first_path = next(iter(filtered.values()))
+        sync_gsettings_wallpaper(first_path)
+        return True
+
+    applied_outputs: set[str] = set()
+    success = False
+    for output_name, path in filtered.items():
+        if send_compositor_wallpaper_command(path, output_name=output_name):
+            success = True
+            applied_outputs.add(output_name)
+
+    if active_outputs and fallback_wallpaper and fallback_wallpaper.is_file():
+        for output_name in sorted(active_outputs):
+            if output_name in applied_outputs:
+                continue
+            if send_compositor_wallpaper_command(fallback_wallpaper, output_name=output_name):
+                success = True
+                applied_outputs.add(output_name)
+
+    if not success:
+        return False
+
+    stop_previous_renderer(state)
+    state.pop("viewer_pid", None)
+    state.pop("renderer_pid", None)
+    state.pop("renderer_bin", None)
+    state["wallpaper_backend"] = "compositor"
+    state["last_wallpaper_per_output"] = {name: str(path) for name, path in filtered.items() if name in applied_outputs}
+    write_state(state)
+
+    first_path = next(iter(filtered.values()))
+    sync_gsettings_wallpaper(first_path)
+    return True
+
+
+def configured_wallpaper(config: dict) -> pathlib.Path | None:
+    appearance = config.get("appearance", {})
+    value = appearance.get("wallpaper", "")
+    if not isinstance(value, str) or not value:
+        return None
+    return pathlib.Path(value)
+
+
+def daily_enabled(config: dict) -> bool:
+    appearance = config.get("appearance", {})
+    if isinstance(appearance.get("daily_wallpaper"), bool):
+        return appearance["daily_wallpaper"]
+    return bool(appearance.get("wallpaper_slideshow", False))
+
+
+def wallpaper_interval_seconds(config: dict) -> int:
+    appearance = config.get("appearance", {})
+    raw_value = appearance.get("wallpaper_interval_minutes", 1440)
+    minutes = 1440
+    if isinstance(raw_value, bool):
+        minutes = 1440
+    elif isinstance(raw_value, int):
+        minutes = raw_value
+    elif isinstance(raw_value, float):
+        minutes = int(raw_value)
+    elif isinstance(raw_value, str):
+        try:
+            minutes = int(raw_value.strip())
+        except ValueError:
+            minutes = 1440
+
+    minutes = max(1, min(minutes, 10080))
+    return minutes * 60
+
+
+def pick_scheduled_wallpaper(config: dict, interval_seconds: int) -> pathlib.Path | None:
+    wallpapers = collect_wallpapers()
+    if not wallpapers:
+        return configured_wallpaper(config)
+
+    slot = int(time.time()) // max(60, interval_seconds)
+    seed = slot ^ (len(wallpapers) * 7919)
+    chooser = random.Random(seed)
+    return chooser.choice(wallpapers)
+
+
+def apply_wallpaper(config: dict) -> bool:
+    if not daily_enabled(config):
+        output_wallpapers = configured_wallpaper_per_output(config)
+        fallback_wallpaper = configured_wallpaper(config)
+        if output_wallpapers and set_wallpaper_per_output(output_wallpapers, fallback_wallpaper=fallback_wallpaper):
+            state = read_state()
+            state["last_applied"] = dt.datetime.now().isoformat(timespec="seconds")
+            write_state(state)
+            return True
+
+    candidates: list[pathlib.Path] = []
+    if daily_enabled(config):
+        chosen = pick_scheduled_wallpaper(config, wallpaper_interval_seconds(config))
+        wallpapers = collect_wallpapers()
+        if chosen is not None:
+            candidates.append(chosen)
+        for wallpaper in wallpapers:
+            if chosen is not None and wallpaper == chosen:
+                continue
+            candidates.append(wallpaper)
+    else:
+        chosen = configured_wallpaper(config)
+        if chosen is not None:
+            candidates.append(chosen)
+
+    for candidate in candidates:
+        if not set_wallpaper(candidate):
+            continue
+
+        state = read_state()
+        state["last_applied"] = dt.datetime.now().isoformat(timespec="seconds")
+        state["last_wallpaper"] = str(candidate)
+        write_state(state)
+        return True
+
+    return False
+
+
+def daemon_loop() -> int:
+    while True:
+        config = read_config()
+        apply_wallpaper(config)
+        if not daily_enabled(config):
+            return 0
+
+        current_interval = wallpaper_interval_seconds(config)
+        stop_after = time.monotonic() + current_interval
+        while time.monotonic() < stop_after:
+            remaining = max(1.0, stop_after - time.monotonic())
+            time.sleep(min(30.0, remaining))
+            config = read_config()
+            if not daily_enabled(config):
+                return 0
+            refreshed_interval = wallpaper_interval_seconds(config)
+            if refreshed_interval != current_interval:
+                break
+
+
+def acquire_lock() -> object | None:
+    state_dir().mkdir(parents=True, exist_ok=True)
+    lock_handle = open(lock_path(), "w", encoding="utf-8")
+    try:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        lock_handle.close()
+        return None
+
+    lock_handle.write(str(os.getpid()))
+    lock_handle.flush()
+    return lock_handle
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="HyaloOS wallpaper daemon")
+    parser.add_argument("--apply-now", action="store_true", help="apply wallpaper immediately and exit")
+    parser.add_argument("--daemon", action="store_true", help="run as daily wallpaper daemon")
+    args = parser.parse_args()
+
+    if args.apply_now:
+        return 0 if apply_wallpaper(read_config()) else 1
+
+    if not args.daemon:
+        parser.print_help(sys.stderr)
+        return 2
+
+    lock_handle = acquire_lock()
+    if lock_handle is None:
+        return 0
+
+    signal.signal(signal.SIGTERM, lambda *_args: sys.exit(0))
+    signal.signal(signal.SIGINT, lambda *_args: sys.exit(0))
+
+    try:
+        return daemon_loop()
+    finally:
+        lock_handle.close()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

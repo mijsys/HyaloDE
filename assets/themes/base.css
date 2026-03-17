@@ -1,0 +1,2512 @@
+/*
+ * Hyalo theme — base.css  (Flat redesign)
+ * All glass/depth effects removed. Single-layer shadows only.
+ * Token contract: see pastel.css (or active theme file).
+ */
+
+#hyalo-panel,
+.hyalo-panel {
+    background-color: @hyalo_bg_panel;
+    border: none;
+    border-bottom: 1px solid alpha(@hyalo_border, 0.60);
+    border-radius: 0;
+    color: @hyalo_text_main;
+    box-shadow: 0 1px 6px alpha(@hyalo_shadow_panel, 0.6);
+}
+
+.panel-shell {
+    margin-top: 0;
+    padding: 0 8px;
+}
+
+.workspace-overview-trigger {
+    min-width: 128px;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    transition: background 150ms ease-out, border-color 150ms ease-out;
+}
+
+.workspace-overview-trigger-box {
+    border-spacing: 0;
+}
+
+.workspace-overview-trigger-glyph {
+    color: alpha(@hyalo_text_main, 0.82);
+    margin-right: 8px;
+}
+
+.workspace-overview-trigger:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.85);
+    border-color: transparent;
+}
+
+.workspace-overview-trigger arrow {
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+}
+
+.workspace-overview-trigger-label {
+    color: @hyalo_text_main;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin-right: 8px;
+}
+
+.workspace-overview-trigger-count {
+    min-width: 18px;
+    min-height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background-color: alpha(@hyalo_bg_raised, 0.72);
+    border: none;
+    color: alpha(@hyalo_text_main, 0.88);
+    font-size: 10px;
+    font-weight: 800;
+    transition: background 180ms ease-out, color 180ms ease-out;
+}
+
+.workspace-overview-trigger-busy .workspace-overview-trigger-count {
+    background-color: @hyalo_accent;
+    color: @hyalo_accent_contrast;
+    border-color: transparent;
+}
+
+.workspace-overview-trigger-icons {
+    padding-left: 2px;
+}
+
+.workspace-quick-controls {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+}
+
+.workspace-quick-action {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0 5px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+.workspace-quick-add:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.85);
+}
+
+.workspace-quick-remove:hover {
+    background-color: alpha(@hyalo_danger, 0.38);
+}
+
+.workspace-overview-trigger-icon {
+    color: alpha(@hyalo_text_main, 0.82);
+    padding: 3px;
+    border-radius: 4px;
+    background: transparent;
+    transition: background 180ms ease-out, color 180ms ease-out;
+}
+
+.panel-section {
+    min-height: 34px;
+    padding: 0 4px;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transition: background 120ms ease-out;
+}
+
+.panel-minimized-tray {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    margin-left: 2px;
+}
+
+.panel-running-apps {
+    min-width: 200px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+
+.panel-running-apps-compact {
+    min-width: 0;
+}
+
+.panel-running-apps-icon-only {
+    min-width: 0;
+}
+
+.panel-tray-item {
+    min-width: 38px;
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 12px;
+    transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+
+.panel-tray-item:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.92);
+    border-color: alpha(@hyalo_border, 0.25);
+}
+
+.panel-tray-item:focus,
+.workspace-overview-trigger:focus,
+.panel-running-app:focus {
+    border-color: @hyalo_focus_ring;
+    box-shadow: none;
+}
+
+.panel-task-shelf {
+    padding: 0 2px;
+    margin-right: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.panel-tray-icon,
+.panel-running-app-icon,
+.task-button-icon {
+    color: alpha(@hyalo_text_main, 0.92);
+}
+
+.panel-running-app {
+    min-height: 28px;
+    min-width: 38px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    transition: background 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+.panel-running-app-compact {
+    min-width: 0;
+    padding: 0 9px;
+}
+
+.panel-running-app-icon-only {
+    min-width: 32px;
+    padding: 0 6px;
+}
+
+.panel-running-app:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.92);
+    border-color: alpha(@hyalo_border, 0.25);
+}
+
+.panel-running-app-active {
+    background-color: alpha(@hyalo_accent, 0.18);
+    border-color: alpha(@hyalo_accent, 0.28);
+    box-shadow: inset 0 -2px 0 @hyalo_accent;
+}
+
+.panel-running-app-minimized {
+    opacity: 0.50;
+}
+
+.panel-running-app-overflow {
+    min-width: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+}
+
+.panel-running-app-overflow:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.88);
+    border-color: transparent;
+}
+
+.panel-running-app-label,
+.task-button-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: @hyalo_text_main;
+}
+
+.panel-running-app-count {
+    min-height: 16px;
+    padding: 0 5px;
+    border-radius: 8px;
+    background-color: alpha(@hyalo_bg_raised, 0.72);
+    color: @hyalo_text_main;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.task-group-popover,
+.task-group-popover > contents,
+.task-group-popover contents {
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 14px;
+}
+
+.task-group-box {
+    padding: 14px;
+    border-radius: 14px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: 0 6px 24px @hyalo_shadow_menu;
+}
+
+.task-group-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.task-group-subtitle {
+    font-size: 11px;
+    margin-bottom: 2px;
+    color: @hyalo_text_secondary;
+}
+
+.task-group-row {
+    margin-top: 4px;
+}
+
+.task-group-entry {
+    min-height: 38px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+}
+
+.task-group-entry:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.task-group-entry-active {
+    border-color: @hyalo_accent;
+    background-color: alpha(@hyalo_accent, 0.10);
+}
+
+.task-group-entry-title {
+    color: alpha(@hyalo_text_main, 0.9);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.task-group-entry-close {
+    min-width: 34px;
+    min-height: 38px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+}
+
+.task-group-entry-close:hover {
+    background-color: alpha(@hyalo_danger, 0.38);
+    border-color: @hyalo_danger;
+}
+
+.panel-running-app-icon-only .panel-running-app-label {
+    font-size: 10px;
+}
+
+button {
+    min-height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: @hyalo_bg_card_alt;
+    color: @hyalo_text_main;
+    font-weight: 600;
+}
+
+button:hover {
+    background-color: @hyalo_bg_hover;
+    border-color: @hyalo_border_strong;
+}
+
+button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+button.accent {
+    background-color: @hyalo_accent;
+    border-color: @hyalo_accent_strong;
+    color: @hyalo_accent_contrast;
+    font-weight: 700;
+}
+
+button.accent:disabled {
+    background-color: alpha(@hyalo_accent, 0.48);
+    border-color: alpha(@hyalo_accent_strong, 0.72);
+    color: alpha(@hyalo_accent_contrast, 0.92);
+    opacity: 1;
+}
+
+.hyalo-button,
+.launcher-power-modal-action,
+.update-auth-modal-action {
+    min-height: 40px;
+    min-width: 98px;
+    padding: 0 16px;
+    margin: 0 2px;
+    border-radius: 8px;
+    border: 1px solid alpha(@hyalo_border_strong, 0.64);
+    box-shadow: none;
+    font-weight: 700;
+    transition: background 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.hyalo-button-primary,
+.launcher-power-modal-primary,
+.update-auth-modal-primary {
+    background-color: alpha(@hyalo_accent, 0.30);
+    color: @hyalo_text_main;
+    border-color: alpha(@hyalo_accent, 0.54);
+}
+
+.hyalo-button-primary:hover,
+.launcher-power-modal-primary:hover,
+.update-auth-modal-primary:hover {
+    background-color: alpha(@hyalo_accent, 0.42);
+    border-color: alpha(@hyalo_accent, 0.68);
+}
+
+.hyalo-button-secondary,
+.launcher-power-modal-cancel,
+.update-auth-modal-cancel {
+    background-color: alpha(@hyalo_bg_card_alt, 0.95);
+    color: alpha(@hyalo_text_main, 0.9);
+    border-color: alpha(@hyalo_border_strong, 0.74);
+}
+
+.hyalo-button-secondary:hover,
+.launcher-power-modal-cancel:hover,
+.update-auth-modal-cancel:hover {
+    background-color: @hyalo_bg_hover;
+    border-color: @hyalo_border_strong;
+}
+
+.hyalo-button-danger,
+.launcher-power-modal-danger {
+    background-color: alpha(@hyalo_danger, 0.24);
+    color: @hyalo_danger_text;
+    border-color: alpha(@hyalo_danger, 0.56);
+}
+
+.hyalo-button-danger:hover,
+.launcher-power-modal-danger:hover {
+    background-color: alpha(@hyalo_danger, 0.34);
+    border-color: alpha(@hyalo_danger, 0.72);
+}
+
+.hyalo-button:focus-visible,
+.launcher-power-modal-action:focus-visible,
+.update-auth-modal-action:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.panel-brand-button {
+    min-width: 36px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+}
+
+.panel-brand-content {
+    spacing: 4px;
+}
+
+.panel-brand-icon {
+    color: @hyalo_accent_contrast;
+}
+
+.panel-brand-badge {
+    margin-top: -8px;
+    margin-left: -2px;
+    min-width: 8px;
+    color: @hyalo_danger;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.panel-nav-button,
+.panel-utility-button,
+.panel-clock-button,
+.panel-quick-button {
+    min-width: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.panel-nav-button:hover,
+.panel-utility-button:hover,
+.panel-clock-button:hover,
+.panel-quick-button:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.88);
+    border-color: transparent;
+}
+
+.panel-clock-button {
+    min-width: 88px;
+    min-height: 28px;
+    padding: 0 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+}
+
+.panel-clock-button arrow {
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+}
+
+.panel-clock-label {
+    color: @hyalo_text_main;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+.panel-quick-button {
+    min-height: 28px;
+    padding: 0 12px;
+    min-width: 120px;
+    font-weight: 600;
+    font-size: 12px;
+    background-color: transparent;
+    border: 1px solid transparent;
+}
+
+.panel-pill {
+    padding: 0 10px;
+    border-radius: 6px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    min-height: 28px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.panel-status-pill {
+    color: alpha(@hyalo_text_main, 0.82);
+}
+
+.panel-clock-pill {
+    padding: 0 12px;
+    background-color: transparent;
+    border-color: transparent;
+    font-weight: 600;
+}
+
+.workspace-button {
+    min-width: 30px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+.workspace-button:hover {
+    background-color: alpha(@hyalo_overlay_soft, 0.92);
+    border-color: alpha(@hyalo_border, 0.30);
+}
+
+.workspace-button.active-workspace {
+    background-color: alpha(@hyalo_accent, 0.20);
+    color: @hyalo_text_main;
+    font-weight: 700;
+    border-color: alpha(@hyalo_accent, 0.32);
+    box-shadow: inset 0 -2px 0 @hyalo_accent;
+}
+
+.workspace-button.urgent-workspace {
+    border-color: @hyalo_danger;
+    box-shadow: inset 0 -2px 0 @hyalo_danger;
+}
+
+.workspace-create-button {
+    min-width: 28px;
+    padding: 0 6px;
+}
+
+.task-row {
+    border-radius: 0;
+    background: transparent;
+    padding: 2px;
+    border: none;
+}
+
+.task-button {
+    min-width: 48px;
+    border-radius: 6px;
+    border-color: @hyalo_border;
+    background: @hyalo_bg_card_alt;
+    color: alpha(@hyalo_text_main, 0.88);
+    font-size: 12px;
+}
+
+.task-button:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.task-button.active-task {
+    background-color: alpha(@hyalo_accent, 0.16);
+    color: @hyalo_text_main;
+    font-weight: 700;
+    border-color: @hyalo_accent;
+}
+
+.task-button.minimized-task {
+    opacity: 0.5;
+}
+
+.task-action {
+    min-width: 28px;
+    padding: 0 6px;
+    border-radius: 6px;
+    border-color: transparent;
+    background-color: @hyalo_bg_card_alt;
+}
+
+.task-action:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.danger-action {
+    color: @hyalo_danger_text;
+}
+
+.hyalo-terminal-window {
+    background-color: @hyalo_bg_window;
+}
+
+.hyalo-terminal-window notebook {
+    border: none;
+    background-color: @hyalo_bg_window;
+}
+
+.hyalo-terminal-window notebook header {
+    background-color: @hyalo_bg_panel;
+    border: none;
+    border-bottom: 1px solid @hyalo_border;
+    padding: 2px 4px 0 4px;
+}
+
+.hyalo-terminal-window notebook tab {
+    min-height: 32px;
+    padding: 0 14px;
+    margin: 4px 2px 0 2px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background-color: transparent;
+    color: alpha(@hyalo_text_secondary, 0.78);
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.hyalo-terminal-window notebook tab:hover {
+    background-color: alpha(@hyalo_bg_hover, 0.6);
+    color: @hyalo_text_main;
+}
+
+.hyalo-terminal-window notebook tab:checked {
+    background-color: @hyalo_bg_window;
+    color: @hyalo_text_main;
+    border-color: @hyalo_border;
+}
+
+.hyalo-terminal-window notebook tab button,
+.terminal-tab-close {
+    min-width: 20px;
+    min-height: 20px;
+    padding: 0;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 700;
+    color: alpha(@hyalo_text_secondary, 0.5);
+}
+
+.hyalo-terminal-window notebook tab button:hover,
+.terminal-tab-close:hover {
+    background-color: alpha(@hyalo_danger, 0.4);
+    color: @hyalo_danger_text;
+}
+
+.terminal-new-tab {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    margin: 2px 6px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: alpha(@hyalo_text_secondary, 0.72);
+    font-size: 18px;
+    font-weight: 600;
+    transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.terminal-new-tab:hover {
+    background-color: alpha(@hyalo_bg_hover, 0.8);
+    color: @hyalo_text_main;
+}
+
+.hyalo-terminal-window notebook stack,
+.hyalo-terminal-window notebook > stack {
+    background-color: @hyalo_bg_window;
+}
+
+.workspace-overview-popover,
+.workspace-overview-popover > contents,
+.workspace-overview-popover contents {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 14px;
+}
+
+.workspace-overview-surface {
+    min-width: 280px;
+    padding: 16px;
+    border-radius: 14px;
+    background: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: 0 8px 32px @hyalo_shadow_menu, 0 2px 8px @hyalo_shadow_panel;
+}
+
+.workspace-overview-header {
+    padding: 4px 4px 12px 4px;
+}
+
+.workspace-overview-header-text {
+    min-width: 0;
+}
+
+.workspace-overview-add-button {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_accent;
+    color: @hyalo_accent_contrast;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.workspace-overview-remove-button {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_danger;
+    color: @hyalo_danger_text;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.workspace-overview-add-button:hover {
+    background: @hyalo_accent_strong;
+}
+
+.workspace-overview-remove-button:hover {
+    background: @hyalo_danger;
+    border-color: @hyalo_danger;
+}
+
+.workspace-overview-remove-button-confirm,
+.workspace-overview-remove-button-confirm:hover {
+    background: @hyalo_danger;
+    border-color: @hyalo_danger;
+}
+
+.workspace-quick-remove-confirm,
+.workspace-quick-remove-confirm:hover {
+    background: @hyalo_danger;
+    border-color: @hyalo_danger;
+}
+
+.workspace-overview-title {
+    font-size: 21px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.workspace-overview-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 12px;
+}
+
+.workspace-overview-thumb-button:drop(active),
+.workspace-overview-window-chip:drop(active) {
+    border-color: @hyalo_focus_ring;
+    box-shadow: none;
+}
+
+.workspace-overview-card {
+    min-width: 240px;
+    padding: 6px;
+    border-radius: 10px;
+    border: 2px solid @hyalo_border;
+    background: @hyalo_bg_card_alt;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.workspace-overview-card:hover {
+    background: @hyalo_bg_hover;
+    border-color: @hyalo_border_strong;
+}
+
+.workspace-overview-card-active {
+    border-color: @hyalo_accent;
+    background: alpha(@hyalo_accent, 0.08);
+}
+
+.workspace-overview-card-active:hover {
+    border-color: @hyalo_accent_strong;
+    background: alpha(@hyalo_accent, 0.12);
+}
+
+.workspace-overview-card-urgent {
+    border-color: @hyalo_danger;
+}
+
+.workspace-overview-thumb-button {
+    padding: 0;
+    border-radius: 6px;
+    border: none;
+    background: @hyalo_bg_raised;
+    overflow: hidden;
+    transition: background 180ms ease-out;
+}
+
+.workspace-overview-thumb-button:hover {
+    background: alpha(@hyalo_text_main, 0.06);
+}
+
+.workspace-overview-thumb-image {
+    border-radius: 6px;
+}
+
+.workspace-overview-thumb-placeholder-icon {
+    color: alpha(@hyalo_text_secondary, 0.4);
+}
+
+.workspace-overview-card-info {
+    padding: 6px 6px 2px 6px;
+}
+
+.workspace-overview-card-name {
+    color: @hyalo_text_main;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.workspace-overview-card-count {
+    min-width: 20px;
+    min-height: 20px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: @hyalo_bg_raised;
+    color: @hyalo_text_main;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.workspace-overview-card-active-dot {
+    color: @hyalo_accent;
+    font-size: 10px;
+}
+
+.workspace-overview-card-chips {
+    padding: 2px 6px 4px 6px;
+}
+
+.workspace-overview-list {
+    padding: 4px 0;
+}
+
+.workspace-overview-window-chip {
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_bg_raised;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.workspace-overview-window-chip:hover {
+    background: @hyalo_bg_hover;
+}
+
+.workspace-overview-window-chip-label {
+    color: alpha(@hyalo_text_main, 0.82);
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.workspace-overview-window-chip-count {
+    min-width: 16px;
+    min-height: 16px;
+    padding: 0 5px;
+    border-radius: 5px;
+    background: @hyalo_bg_card;
+    color: @hyalo_text_main;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.workspace-overview-scroll {
+    background: transparent;
+}
+
+.workspace-overview-scroll > viewport {
+    background: transparent;
+}
+
+.workspace-overview-scroll scrollbar trough {
+    background: transparent;
+}
+
+.workspace-overview-scroll scrollbar slider {
+    min-width: 28px;
+    min-height: 8px;
+    border-radius: 4px;
+    background: alpha(@hyalo_text_secondary, 0.35);
+    margin-bottom: 1px;
+}
+
+.quick-panel-popover,
+.quick-panel-popover > contents,
+.quick-panel-popover contents,
+.clock-panel-popover,
+.clock-panel-popover > contents,
+.clock-panel-popover contents {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 14px;
+}
+
+.quick-panel-surface,
+.clock-panel-surface {
+    min-width: 340px;
+    padding: 16px;
+    border-radius: 14px;
+    background: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: 0 8px 32px @hyalo_shadow_menu, 0 2px 8px @hyalo_shadow_panel;
+}
+
+.clock-panel-surface {
+    min-width: 300px;
+    background: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: 0 8px 32px @hyalo_shadow_menu, 0 2px 8px @hyalo_shadow_panel;
+}
+
+.quick-panel-header,
+.clock-panel-header {
+    padding: 6px 4px 14px 4px;
+}
+
+.quick-panel-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.quick-panel-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 11px;
+}
+
+.clock-panel-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.clock-panel-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 11px;
+}
+
+.clock-panel-time-box {
+    padding: 18px 16px;
+    border-radius: 12px;
+    background: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.hyalo-control-center {
+    background-color: @hyalo_bg_desktop;
+    color: @hyalo_text_main;
+}
+
+.settings-root {
+    min-height: 760px;
+    min-width: 0;
+}
+
+.settings-sidebar {
+    padding: 18px;
+    border-radius: 12px;
+    background-color: @hyalo_bg_window;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.settings-brand-block {
+    padding: 4px 4px 10px 4px;
+}
+
+.settings-brand-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.settings-brand-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.settings-search {
+    margin: 4px 0 10px 0;
+}
+
+.settings-nav-list {
+    margin-bottom: 10px;
+}
+
+.settings-nav-button {
+    min-height: 74px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_card_alt;
+    border: 1px solid @hyalo_border;
+}
+
+.settings-nav-button box {
+    min-width: 0;
+}
+
+.settings-nav-button:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.settings-nav-button.active-nav {
+    background-color: @hyalo_success;
+    border-color: @hyalo_border_strong;
+    box-shadow: none;
+}
+
+.settings-nav-title {
+    color: @hyalo_text_main;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.settings-nav-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 12px;
+}
+
+.display-layout-controls {
+    margin-left: 12px;
+    min-width: 430px;
+}
+
+.display-layout-canvas {
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background: alpha(@hyalo_bg_input, 0.8);
+    box-shadow: none;
+}
+
+.display-preview-output {
+    min-height: 50px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border_strong;
+    background: alpha(@hyalo_bg_card_alt, 0.94);
+    color: @hyalo_text_main;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+}
+
+.display-preview-output:hover {
+    border-color: @hyalo_accent;
+    background: alpha(@hyalo_bg_hover, 0.94);
+}
+
+.display-preview-primary {
+    border-color: @hyalo_accent_strong;
+    box-shadow: none;
+}
+
+.settings-status-card {
+    padding: 16px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+}
+
+.settings-status-title {
+    color: alpha(@hyalo_text_secondary, 0.82);
+    font-size: 12px;
+}
+
+.settings-status-value {
+    color: @hyalo_text_main;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.settings-status-caption {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 12px;
+}
+
+.settings-content-scroll,
+.settings-window-scroll,
+.settings-window-scroll > viewport,
+.settings-content-scroll > viewport {
+    background: transparent;
+}
+
+.settings-content-box {
+    min-width: 0;
+}
+
+.settings-hero {
+    padding: 24px 28px;
+    border-radius: 12px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.settings-hero-badge {
+    color: alpha(@hyalo_text_secondary, 0.84);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.settings-hero-title {
+    color: @hyalo_text_main;
+    font-size: 36px;
+    font-weight: 900;
+}
+
+.settings-hero-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.settings-hero-actions {
+    margin-left: 12px;
+}
+
+.settings-secondary-action {
+    background-color: @hyalo_bg_card_alt;
+}
+
+.settings-page {
+    padding: 2px 2px 24px 2px;
+}
+
+.settings-page-intro {
+    padding: 2px 6px 4px 6px;
+}
+
+.settings-page-kicker {
+    color: alpha(@hyalo_text_secondary, 0.80);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.settings-page-summary {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 14px;
+}
+
+.settings-card {
+    margin-top: 4px;
+    border-radius: 12px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.settings-card-header {
+    padding: 20px 22px 18px 22px;
+}
+
+.settings-card-title {
+    color: @hyalo_text_main;
+    font-size: 20px;
+    font-weight: 850;
+}
+
+.settings-card-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 13px;
+}
+
+.settings-row {
+    min-height: 82px;
+    padding: 0 22px;
+}
+
+.settings-row-title {
+    color: @hyalo_text_main;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.settings-row-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.settings-divider {
+    opacity: 0.18;
+}
+
+.settings-combo,
+.settings-scale,
+.settings-slider-box,
+.settings-swatch-strip {
+    margin-left: 12px;
+}
+
+.settings-slider-box {
+    min-width: 260px;
+}
+
+.settings-inline-value {
+    color: @hyalo_text_secondary;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.settings-apply-button {
+    min-width: 124px;
+}
+
+.settings-wallpaper-preview {
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_bg_input;
+}
+
+.settings-row switch {
+    min-width: 50px;
+    min-height: 28px;
+    border-radius: 14px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_bg_card_alt;
+}
+
+.settings-row switch:checked {
+    background: @hyalo_accent;
+    border-color: @hyalo_accent_strong;
+}
+
+.settings-row switch slider {
+    min-width: 22px;
+    min-height: 22px;
+    border-radius: 11px;
+    border: 1px solid alpha(@hyalo_border_strong, 0.8);
+    background: @hyalo_bg_window;
+}
+
+.settings-row switch:checked slider {
+    border-color: alpha(@hyalo_accent_contrast, 0.72);
+    background: @hyalo_accent_contrast;
+}
+
+.settings-row scale trough {
+    min-height: 8px;
+    border-radius: 4px;
+    background: alpha(@hyalo_border, 0.36);
+}
+
+.settings-row scale highlight {
+    border-radius: 4px;
+    background: @hyalo_accent;
+}
+
+.settings-row scale slider {
+    min-width: 18px;
+    min-height: 18px;
+    border-radius: 9px;
+    border: 1px solid @hyalo_accent_strong;
+    background: @hyalo_accent;
+}
+
+.settings-info-row {
+    min-height: 62px;
+    padding: 0 22px;
+}
+
+.settings-info-title {
+    color: alpha(@hyalo_text_secondary, 0.84);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.settings-info-value {
+    color: @hyalo_text_main;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+.gpu-driver-stack {
+    min-width: 420px;
+    padding: 10px 12px;
+    border: 1px solid alpha(@hyalo_border, 0.78);
+    background-color: alpha(@hyalo_bg_card_alt, 0.72);
+    box-shadow: none;
+}
+
+.gpu-driver-toolbar {
+    margin-bottom: 2px;
+}
+
+.gpu-driver-install-row {
+    margin-top: 2px;
+}
+
+.gpu-driver-vendor-combo {
+    min-width: 170px;
+}
+
+.gpu-driver-installed-label {
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 1px solid alpha(@hyalo_border, 0.68);
+    background-color: alpha(@hyalo_bg_input, 0.72);
+    color: alpha(@hyalo_text_main, 0.92);
+}
+
+.settings-swatch {
+    min-width: 26px;
+    min-height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid @hyalo_border;
+    
+}
+
+.settings-swatch:hover {
+    transform: scale(1.04);
+}
+
+.settings-swatch.active-swatch {
+    border-color: @hyalo_border_strong;
+}
+
+.swatch-emerald {
+    background: #8dd8b3;
+}
+
+.swatch-sky {
+    background: #73c7f2;
+}
+
+.swatch-amber {
+    background: #d9a54d;
+}
+
+.swatch-rose {
+    background: #de7f95;
+}
+
+.swatch-violet {
+    background: #8d73d8;
+}
+
+.clock-panel-time {
+    font-size: 46px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+.clock-panel-date {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 14px;
+}
+
+.clock-panel-footer {
+    padding: 12px 14px 4px 14px;
+}
+
+.clock-panel-placeholder {
+    color: alpha(@hyalo_text_secondary, 0.78);
+    font-size: 12px;
+}
+
+.quick-panel-status-box {
+    padding: 14px 15px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.quick-panel-status-row {
+    color: alpha(@hyalo_text_main, 0.84);
+    font-size: 13px;
+}
+
+.quick-panel-network-details {
+    margin-top: 10px;
+    color: alpha(@hyalo_text_secondary, 0.84);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.quick-panel-section-title {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: alpha(@hyalo_text_secondary, 0.78);
+}
+
+.quick-panel-controls-box {
+    margin-top: 4px;
+    border-spacing: 8px;
+}
+
+.quick-panel-control-row {
+    min-height: 50px;
+    padding: 0 15px;
+    border-radius: 10px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.quick-panel-control-row:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+    .quick-panel-control-row:focus,
+    .quick-panel-toggle:focus,
+    .quick-panel-device-button:focus,
+    .quick-panel-action:focus,
+    .quick-panel-power-action:focus,
+    .workspace-quick-action:focus,
+    .workspace-overview-add-button:focus,
+    .workspace-overview-remove-button:focus,
+    .workspace-overview-thumb-button:focus,
+    .workspace-overview-window-chip:focus {
+        border-color: @hyalo_focus_ring;
+        box-shadow: none;
+    }
+
+.quick-panel-control-label {
+    color: alpha(@hyalo_text_main, 0.9);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.quick-panel-control-row switch {
+    border-radius: 14px;
+    background-color: @hyalo_bg_pressed;
+    box-shadow: none;
+}
+
+.quick-panel-control-row switch:checked {
+    background-color: @hyalo_accent;
+}
+
+.quick-panel-control-row switch slider {
+    min-width: 18px;
+    min-height: 18px;
+    margin: 3px;
+    border-radius: 9px;
+    background-color: @hyalo_bg_window;
+    border: 1px solid @hyalo_border_strong;
+}
+
+.quick-panel-toggle-box {
+    margin-top: 4px;
+}
+
+.quick-panel-toggle {
+    min-height: 42px;
+    border-radius: 10px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.quick-panel-toggle:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.quick-panel-toggle-active {
+    background-color: @hyalo_success;
+    border-color: @hyalo_border_strong;
+    box-shadow: none;
+}
+
+.quick-panel-brightness-box {
+    margin-top: 2px;
+    padding: 14px 15px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+}
+
+.quick-panel-audio-box {
+    margin-top: 2px;
+    padding: 14px 15px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+}
+
+.quick-panel-device-list {
+    padding: 8px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+}
+
+.quick-panel-device-button {
+    min-height: 44px;
+    padding: 0 13px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: @hyalo_bg_card_alt;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.quick-panel-device-button:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.quick-panel-device-button-active {
+    background-color: @hyalo_success;
+    border-color: @hyalo_border_strong;
+}
+
+.quick-panel-device-label {
+    color: alpha(@hyalo_text_main, 0.86);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.quick-panel-brightness-scale trough {
+    min-height: 8px;
+    border-radius: 4px;
+    background-color: @hyalo_bg_pressed;
+}
+
+.quick-panel-brightness-scale highlight {
+    border-radius: 4px;
+    background-color: @hyalo_accent;
+}
+
+.quick-panel-brightness-scale slider {
+    min-width: 18px;
+    min-height: 18px;
+    border-radius: 9px;
+    background-color: @hyalo_bg_window;
+    border: 2px solid @hyalo_border_strong;
+}
+
+.quick-panel-actions-box,
+.quick-panel-power-box {
+    margin-top: 6px;
+}
+
+.quick-panel-action,
+.quick-panel-power-action {
+    min-height: 42px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out, color 180ms ease-out;
+}
+
+.quick-panel-action:hover,
+.quick-panel-power-action:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.quick-panel-power-action.danger {
+    color: @hyalo_danger_text;
+}
+
+.launcher-surface {
+    padding: 16px;
+    background-color: @hyalo_bg_window;
+    border: 1px solid @hyalo_border;
+    border-radius: 12px;
+    box-shadow: 0 12px 48px @hyalo_shadow_modal, 0 4px 16px @hyalo_shadow_menu;
+}
+
+.launcher-window,
+.launcher-popover,
+.launcher-context-popover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 8px;
+}
+
+.launcher-window > contents,
+.launcher-popover > contents,
+.launcher-context-popover > contents,
+.launcher-window contents,
+.launcher-popover contents,
+.launcher-context-popover contents {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    border-radius: 8px;
+}
+
+.launcher-popover arrow,
+.launcher-context-popover arrow {
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+}
+
+.launcher-sidebar {
+    min-width: 232px;
+    padding: 8px 16px 8px 0;
+    border-right: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_window;
+    border-radius: 8px;
+}
+
+.launcher-hero {
+    padding: 20px 22px;
+    border-radius: 12px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.launcher-profile-box {
+    margin-bottom: 6px;
+}
+
+.launcher-avatar {
+    min-width: 54px;
+    min-height: 54px;
+    padding: 0 0 1px 0;
+    border-radius: 50%;
+    background-color: @hyalo_accent;
+    color: @hyalo_accent_contrast;
+    font-size: 20px;
+    font-weight: 800;
+    box-shadow: none;
+}
+
+.launcher-user-name {
+    font-size: 24px;
+}
+
+.launcher-user-handle {
+    color: alpha(@hyalo_text_secondary, 0.82);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+.launcher-power-row {
+    margin-top: 2px;
+}
+
+.launcher-power-button {
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card_alt;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-power-button:hover {
+    background-color: @hyalo_bg_hover;
+    border-color: @hyalo_border_strong;
+}
+
+.launcher-power-icon {
+    color: alpha(@hyalo_text_main, 0.84);
+    transition: color 180ms ease-out;
+}
+
+.launcher-main-pane {
+    padding: 6px 0 0 14px;
+    background: transparent;
+    border-radius: 8px;
+}
+
+.launcher-system-card {
+    padding: 15px 16px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.launcher-system-line {
+    color: alpha(@hyalo_text_main, 0.84);
+    font-size: 13px;
+    padding: 1px 0;
+}
+
+.launcher-sidebar-action {
+    min-height: 44px;
+    border-radius: 8px;
+    background-color: @hyalo_accent;
+    border-color: @hyalo_accent_strong;
+    color: @hyalo_accent_contrast;
+    font-weight: 700;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-sidebar-secondary-action {
+    min-height: 42px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_card_alt;
+    border-color: @hyalo_border;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-sidebar-action:hover,
+.launcher-sidebar-secondary-action:hover {
+    border-color: @hyalo_border_strong;
+}
+
+.launcher-sidebar-action:hover {
+    background-color: @hyalo_accent_strong;
+}
+
+.launcher-sidebar-secondary-action:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.launcher-app-list {
+    padding: 10px 2px 14px 2px;
+}
+
+.launcher-search {
+    min-height: 56px;
+    padding: 0 22px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_input;
+    color: @hyalo_text_main;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-search:focus,
+.launcher-search:focus-within {
+    background-color: @hyalo_bg_window;
+    border-color: @hyalo_focus_ring;
+    box-shadow: none;
+}
+
+.launcher-search image {
+    color: alpha(@hyalo_text_secondary, 0.84);
+    transition: color 180ms ease-out;
+}
+
+.launcher-search:focus image,
+.launcher-search:focus-within image {
+    color: @hyalo_text_main;
+}
+
+.launcher-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+    letter-spacing: -0.02em;
+}
+
+.launcher-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 13px;
+}
+
+.launcher-section-label {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: alpha(@hyalo_text_secondary, 0.78);
+}
+
+.launcher-filters {
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.launcher-filter {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_card_alt;
+    border-color: @hyalo_border;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out, color 180ms ease-out;
+}
+
+.launcher-filter:hover {
+    background-color: @hyalo_bg_hover;
+}
+
+.launcher-filter.active-launcher-filter {
+    background-color: @hyalo_success;
+    color: @hyalo_success_text;
+    font-weight: 800;
+    border-color: @hyalo_border_strong;
+    box-shadow: none;
+}
+
+.launcher-pinned-row {
+    margin-bottom: 4px;
+}
+
+.launcher-pinned-list {
+    padding: 8px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.launcher-pinned-row {
+    margin-bottom: 8px;
+}
+
+.launcher-pinned-entry {
+    min-height: 50px;
+    padding: 8px 13px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_card_alt;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-pinned-content {
+    margin: 0 2px;
+}
+
+.launcher-pinned-icon,
+.launcher-entry-icon {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_raised;
+    color: @hyalo_text_main;
+    box-shadow: none;
+    transition: background 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-pinned-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: alpha(@hyalo_text_main, 0.95);
+}
+
+.launcher-entry {
+    min-height: 66px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: @hyalo_bg_card_alt;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.launcher-entry:hover,
+.launcher-pinned-entry:hover {
+    background-color: @hyalo_bg_hover;
+    border-color: @hyalo_border_strong;
+}
+
+.launcher-entry,
+.launcher-pinned-entry {
+    box-shadow: none;
+}
+
+.launcher-entry:hover,
+.launcher-pinned-entry:hover {
+    box-shadow: none;
+}
+
+.launcher-entry:focus,
+.launcher-pinned-entry:focus,
+.launcher-filter:focus,
+.launcher-sidebar-action:focus,
+.launcher-sidebar-secondary-action:focus,
+.launcher-context-action:focus,
+.launcher-power-button:focus {
+    outline: none;
+    border-color: @hyalo_focus_ring;
+    box-shadow: none;
+}
+
+.launcher-entry-content {
+    margin: 0 2px;
+}
+
+.launcher-entry-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: @hyalo_text_main;
+}
+
+.launcher-entry-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.82);
+    font-size: 12px;
+}
+
+.launcher-entry-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    background-color: @hyalo_bg_raised;
+    color: alpha(@hyalo_text_secondary, 0.88);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.launcher-empty {
+    color: alpha(@hyalo_text_secondary, 0.88);
+    padding: 10px 6px 2px 6px;
+}
+
+.launcher-results {
+    border-radius: 8px;
+    background-color: @hyalo_bg_raised;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.launcher-results > viewport {
+    background: transparent;
+    border-radius: 8px;
+}
+
+.launcher-pinned-list,
+.launcher-system-card,
+.launcher-hero,
+.launcher-results {
+    background-clip: padding-box;
+}
+
+.launcher-results > viewport > box,
+.launcher-results > viewport > widget {
+    border-radius: 8px;
+}
+
+.launcher-results scrollbar trough {
+    background: transparent;
+}
+
+.launcher-results scrollbar slider {
+    min-width: 4px;
+    min-height: 32px;
+    border-radius: 4px;
+    background: alpha(@hyalo_text_secondary, 0.32);
+    margin-right: 2px;
+}
+
+.launcher-results scrollbar slider:hover {
+    background: alpha(@hyalo_text_secondary, 0.46);
+}
+
+.launcher-context-box {
+    min-width: 210px;
+    padding: 11px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: none;
+}
+
+.launcher-context-menu {
+    min-width: 210px;
+    padding: 11px;
+    margin: 4px 8px;
+    border-radius: 10px;
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border;
+    box-shadow: 0 8px 32px @hyalo_shadow_modal, 0 2px 8px @hyalo_shadow_menu;
+}
+
+.launcher-context-popover,
+.launcher-context-popover > contents,
+.launcher-context-popover contents {
+    border-radius: 8px;
+}
+
+.launcher-context-action {
+    min-height: 40px;
+    margin: 2px 0;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-color: @hyalo_bg_card_alt;
+    box-shadow: none;
+    font-weight: 600;
+    transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out, color 180ms ease-out;
+}
+
+.launcher-context-action:hover {
+    background-color: @hyalo_bg_hover;
+    border: 1px solid @hyalo_border_strong;
+}
+
+.launcher-power-button:hover,
+.launcher-sidebar-action:hover,
+.launcher-sidebar-secondary-action:hover,
+.launcher-filter:hover,
+.quick-panel-toggle:hover,
+.quick-panel-device-button:hover,
+.quick-panel-action:hover,
+.quick-panel-power-action:hover,
+.workspace-quick-action:hover,
+.workspace-overview-add-button:hover,
+.workspace-overview-remove-button:hover,
+.workspace-overview-window-chip:hover {
+}
+
+.launcher-context-danger {
+    color: @hyalo_danger_text;
+}
+
+/* ── Hyalo modal system ──────────────────────────────────────────── */
+/* Shell: transparent window to let card float */
+.hyalo-modal-window,
+.launcher-power-modal,
+.update-auth-modal,
+.files-dialog {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* Card surface: the visible opaque card */
+.hyalo-modal-surface,
+.launcher-power-modal-surface,
+.update-auth-modal-surface,
+.files-dialog-surface {
+    background-color: @hyalo_bg_card;
+    border: 1px solid @hyalo_border_strong;
+    border-radius: 14px;
+    box-shadow: 0 24px 64px @hyalo_shadow_modal, 0 6px 20px @hyalo_shadow_menu;
+    padding: 20px 24px 16px 24px;
+}
+
+/* Modal title */
+.hyalo-modal-title,
+.launcher-power-modal-title {
+    color: @hyalo_text_main;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+/* Modal subtitle / description */
+.hyalo-modal-subtitle,
+.launcher-power-modal-subtitle,
+.update-auth-modal-subtitle {
+    color: @hyalo_text_secondary;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+/* Modal label (field heading) */
+.hyalo-modal-label,
+.update-auth-modal-label {
+    color: @hyalo_text_main;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+}
+
+/* Modal text entry */
+.hyalo-modal-entry,
+.update-auth-modal-entry,
+.files-dialog-entry {
+    min-height: 38px;
+    border-radius: 8px;
+    border: 1px solid @hyalo_border;
+    background: @hyalo_bg_input;
+    color: @hyalo_text_main;
+    padding: 0 10px;
+}
+
+.hyalo-modal-entry:focus,
+.hyalo-modal-entry:focus-within,
+.update-auth-modal-entry:focus,
+.update-auth-modal-entry:focus-within,
+.files-dialog-entry:focus,
+.files-dialog-entry:focus-within {
+    border-color: @hyalo_accent;
+    box-shadow: none;
+}
+
+/* Modal error text */
+.hyalo-modal-error,
+.update-auth-modal-error {
+    color: @hyalo_danger_text;
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 18px;
+}
+
+/* Files dialog title (smaller variant) */
+.files-dialog-title {
+    color: @hyalo_text_main;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+}
+
+.launcher-power-modal-icon {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    color: @hyalo_text_main;
+    background-color: alpha(@hyalo_accent, 0.18);
+    border: 1px solid alpha(@hyalo_accent, 0.34);
+}
+
+.uc-notification {
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid alpha(@hyalo_border, 0.9);
+    background: alpha(@hyalo_bg_card_alt, 0.94);
+    color: @hyalo_text_main;
+}
+
+.uc-notification-running {
+    border-color: alpha(@hyalo_accent, 0.62);
+    background: alpha(@hyalo_accent, 0.16);
+}
+
+.uc-notification-success {
+    border-color: alpha(@hyalo_success, 0.65);
+    background: alpha(@hyalo_success, 0.16);
+}
+
+.uc-notification-error {
+    border-color: alpha(@hyalo_danger, 0.72);
+    background: alpha(@hyalo_danger, 0.14);
+}
+
+.uc-notification spinner {
+    color: @hyalo_text_main;
+}
+
+.store-status {
+    min-height: 36px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid alpha(@hyalo_accent, 0.52);
+    background: alpha(@hyalo_accent, 0.12);
+    color: @hyalo_text_main;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.store-status spinner {
+    color: @hyalo_accent;
+}
+
+.store-search-entry {
+    min-height: 36px;
+}
+
+.store-results-list {
+    border-radius: 10px;
+    border: 1px solid alpha(@hyalo_border, 0.82);
+    background: alpha(@hyalo_bg_card, 0.92);
+}
+
+.store-panel {
+    border-radius: 10px;
+    border: 1px solid alpha(@hyalo_border, 0.72);
+    background: alpha(@hyalo_bg_card, 0.9);
+    padding: 10px;
+}
+
+.store-section-header {
+    color: @hyalo_text_main;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.store-results-meta {
+    color: alpha(@hyalo_text_secondary, 0.92);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.store-result-row {
+    padding: 10px 12px;
+    border-bottom: 1px solid alpha(@hyalo_border, 0.38);
+}
+
+.store-result-row:hover {
+    background: alpha(@hyalo_bg_hover, 0.68);
+}
+
+.store-result-title {
+    color: @hyalo_text_main;
+    font-weight: 700;
+}
+
+.store-result-subtitle {
+    color: alpha(@hyalo_text_secondary, 0.96);
+    font-size: 12px;
+}
+
+.store-result-badge {
+    min-width: 68px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid alpha(@hyalo_accent, 0.45);
+    background: alpha(@hyalo_accent, 0.16);
+    color: @hyalo_text_main;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.store-result-state-badge {
+    min-width: 96px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid alpha(@hyalo_border, 0.56);
+    background: alpha(@hyalo_bg_card_alt, 0.9);
+    color: @hyalo_text_main;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.store-result-state-installed {
+    border-color: alpha(@hyalo_success, 0.68);
+    background: alpha(@hyalo_success, 0.18);
+}
+
+.store-result-state-available {
+    border-color: alpha(@hyalo_accent, 0.54);
+    background: alpha(@hyalo_accent, 0.14);
+}
+
+.store-page-label {
+    color: @hyalo_text_secondary;
+    font-weight: 600;
+}
+
+.store-chip-button {
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid alpha(@hyalo_border, 0.72);
+    background: alpha(@hyalo_bg_card_alt, 0.85);
+    color: @hyalo_text_main;
+    font-weight: 600;
+}
+
+.store-chip-button:hover {
+    background: alpha(@hyalo_bg_hover, 0.74);
+    border-color: alpha(@hyalo_border_strong, 0.82);
+}
+
+.store-chip-button-active {
+    border-color: alpha(@hyalo_accent, 0.72);
+    background: alpha(@hyalo_accent, 0.24);
+    color: @hyalo_text_main;
+}
+
+.store-details-header {
+    color: @hyalo_text_main;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.store-details-body {
+    color: alpha(@hyalo_text_secondary, 0.98);
+    line-height: 1.35;
+}
+
+.hyalo-surface {
+    background-color: @hyalo_bg_card;
+    color: @hyalo_text_main;
+}
+
+.title-1 {
+    font-size: 30px;
+    font-weight: 800;
+    color: @hyalo_text_main;
+}
+
+.dim-label {
+    color: alpha(@hyalo_text_secondary, 0.88);
+}
+/* ============ Hyalo Files (File Manager) ============================== */
+
+.hyalo-files-window {
+    background-color: @hyalo_bg_window;
+}
+
+.files-toolbar {
+    padding: 4px 8px;
+    background-color: transparent;
+}
+
+.files-nav-btn {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: background 120ms ease-out;
+}
+
+.files-path-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: @hyalo_text_main;
+    padding: 4px 12px;
+}
+
+.files-location-entry {
+    border-radius: 8px;
+    padding: 4px 12px;
+}
+
+.files-sidebar {
+    background-color: @hyalo_bg_card;
+    border-right: 1px solid @hyalo_border;
+    border-radius: 0;
+}
+
+.files-places row {
+    border-radius: 8px;
+    margin: 2px 6px;
+    padding: 2px 0;
+    transition: background 120ms ease-out;
+}
+
+.files-places row:selected {
+    background-color: alpha(@hyalo_accent, 0.18);
+    color: @hyalo_accent;
+}
+
+.files-content {
+    background-color: @hyalo_bg_window;
+}
+
+.files-grid {
+    padding: 8px;
+}
+
+.files-item {
+    border-radius: 8px;
+    padding: 4px 2px;
+    min-width: 80px;
+    max-width: 88px;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.files-item:hover {
+    background-color: alpha(@hyalo_text_main, 0.06);
+}
+
+.files-item:selected {
+    background-color: alpha(@hyalo_accent, 0.16);
+}
+
+.files-item-label {
+    font-size: 11px;
+    color: @hyalo_text_main;
+}
+
+.files-item image {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.files-spinner {
+    color: alpha(@hyalo_text_secondary, 0.64);
+}
+
+.files-status {
+    font-size: 12px;
+    color: @hyalo_text_secondary;
+    padding: 4px 8px;
+    border-top: 1px solid @hyalo_border;
+}
+
+/* ── Modern 2025 consistency layer ─────────────────────────────────── */
+
+/* Floating surfaces: rounded + layered shadow */
+dialog,
+popover,
+menu,
+.tooltip,
+.hyalo-modal {
+    border-radius: 14px;
+    box-shadow: 0 12px 48px @hyalo_shadow_modal, 0 4px 16px @hyalo_shadow_menu;
+    border: 1px solid @hyalo_border;
+    background-color: @hyalo_bg_card;
+}
+
+/* Popover internals: transparent so parent radius clips */
+popover > contents,
+.task-group-popover > contents,
+.workspace-overview-popover > contents,
+.quick-panel-popover > contents,
+.clock-panel-popover > contents,
+.launcher-popover > contents,
+.launcher-context-popover > contents {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+/* Buttons: subtle rounding */
+button,
+.button,
+modelbutton,
+.hyalo-button {
+    border-radius: 8px;
+    box-shadow: none;
+    background-image: none;
+    border: 1px solid alpha(@hyalo_border, 0.88);
+}
+
+/* Inputs: consistent rounding */
+entry,
+textview,
+searchentry,
+combobox,
+spinbutton,
+.launcher-search,
+.settings-input,
+.settings-picker {
+    border-radius: 8px;
+    box-shadow: none;
+    background-image: none;
+    border: 1px solid alpha(@hyalo_border, 0.88);
+}
+
+/* Hover: lift effect */
+button:hover,
+.button:hover,
+modelbutton:hover {
+    box-shadow: 0 1px 4px @hyalo_shadow_panel;
+    background-color: alpha(@hyalo_bg_hover, 0.9);
+    border-color: alpha(@hyalo_border_strong, 0.92);
+}
+
+/* Active: pressed */
+button:active,
+.button:active,
+modelbutton:active {
+    background-color: alpha(@hyalo_bg_pressed, 0.95);
+    border-color: alpha(@hyalo_border_strong, 0.96);
+    box-shadow: none;
+}
+
+/* Focus ring */
+button:focus,
+.button:focus,
+modelbutton:focus,
+entry:focus,
+searchentry:focus,
+textview:focus,
+.launcher-search:focus,
+.settings-input:focus {
+    box-shadow: none;
+    outline: none;
+    border-color: @hyalo_focus_ring;
+}
+
+/* Control center: allow radii (remove old force-flat) */
+.hyalo-control-center .settings-row switch {
+    border-radius: 14px;
+}
+.hyalo-control-center .settings-row switch slider {
+    border-radius: 11px;
+}
+.hyalo-control-center .settings-row scale trough,
+.hyalo-control-center .settings-row scale highlight {
+    border-radius: 4px;
+}
+.hyalo-control-center .settings-row scale slider {
+    border-radius: 9px;
+}
+.hyalo-control-center .settings-swatch {
+    border-radius: 50%;
+}
+

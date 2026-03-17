@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Files
+Comment=File manager for HyaloOS
+Exec=hyalo-files
+Icon=hyalo-files
+Terminal=false
+Categories=System;FileManager;GTK;
+Keywords=file;manager;folder;hyalo;
+StartupNotify=true
+MimeType=inode/directory;

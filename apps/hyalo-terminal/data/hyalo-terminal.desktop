@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Terminal
+Comment=Terminal and command runner for HyaloOS
+Exec=hyalo-terminal
+Icon=hyalo-terminal
+Terminal=false
+Categories=System;TerminalEmulator;GTK;
+Keywords=terminal;console;shell;hyalo;
+StartupNotify=true

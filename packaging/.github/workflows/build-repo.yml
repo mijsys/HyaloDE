@@ -1,0 +1,73 @@
+name: Build Pacman Repository
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    
+    steps:
+      - name: Setup Arch Linux
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed \
+            base-devel cmake meson ninja pkg-config git \
+            gtkmm-4.0 gtk4-layer-shell \
+            lightdm liblightdm-gobject-1 \
+            vte4 gdk-pixbuf2 \
+            wayland wayland-protocols wlr-protocols \
+            nlohmann-json \
+            fakeroot
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          # Create non-root user for makepkg
+          useradd -m builder
+          chown -R builder:builder .
+          
+          cd packaging/arch
+          
+          # For tagged releases, update PKGBUILD version
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
+          fi
+          
+          # Build the package
+          su builder -c "makepkg -s --noconfirm --noprogressbar"
+
+      - name: Create repo database
+        run: |
+          mkdir -p repo/x86_64
+          cp packaging/arch/*.pkg.tar.zst repo/x86_64/
+          cd repo/x86_64
+          repo-add hyalode.db.tar.gz *.pkg.tar.zst
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          destination_dir: repo
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyalode-package
+          path: packaging/arch/*.pkg.tar.zst
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packaging/arch/*.pkg.tar.zst
+          generate_release_notes: true

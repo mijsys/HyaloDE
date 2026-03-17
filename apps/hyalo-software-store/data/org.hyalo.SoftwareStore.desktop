@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Software Store
+Comment=Browse and install apps from Pacman, AUR and Flatpak
+Exec=hyalo-software-store
+Icon=hyalo-software-store
+Terminal=false
+Categories=System;PackageManager;GTK;
+Keywords=store;packages;aur;flatpak;pacman;hyalo;
+StartupNotify=true

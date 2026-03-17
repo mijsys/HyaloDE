@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hyalo Settings
+Comment=Configure HyaloOS
+Exec=hyalo-control-center
+Icon=hyalo-control-center
+Terminal=false
+Categories=Settings;DesktopSettings;GTK;
+Keywords=settings;control;hyalo;desktop;
+StartupNotify=true
