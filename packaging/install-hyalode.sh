@@ -28,6 +28,7 @@ NC='\033[0m'
 REPO_URL="https://github.com/mijsys/HyaloDE"
 REPO_NAME="hyalode"
 REPO_SERVER="https://mijsys.github.io/HyaloDE/repo/\$arch"
+REPO_SERVER_FALLBACK="https://raw.githubusercontent.com/mijsys/HyaloDE/gh-pages/repo/\$arch"
 PACMAN_CONF="/etc/pacman.conf"
 
 # ── Helpers ──
@@ -49,14 +50,16 @@ repo_arch() {
 
 repo_db_url() {
     local arch server
+    server="${1:-$REPO_SERVER}"
     arch="$(repo_arch)"
-    server="${REPO_SERVER//\$arch/$arch}"
+    server="${server//\$arch/$arch}"
     echo "${server%/}/hyalode.db"
 }
 
 repo_server_reachable() {
-    local db_url
-    db_url="$(repo_db_url)"
+    local server db_url
+    server="${1:-$REPO_SERVER}"
+    db_url="$(repo_db_url "$server")"
 
     if have_cmd curl; then
         curl -fsL --max-time 12 -o /dev/null "$db_url"
@@ -70,6 +73,20 @@ repo_server_reachable() {
 
     warn "Brak curl/wget, pomijam test dostępności repozytorium: $db_url"
     return 0
+}
+
+select_repo_server() {
+    if repo_server_reachable "$REPO_SERVER"; then
+        echo "$REPO_SERVER"
+        return 0
+    fi
+
+    if repo_server_reachable "$REPO_SERVER_FALLBACK"; then
+        echo "$REPO_SERVER_FALLBACK"
+        return 0
+    fi
+
+    return 1
 }
 
 need_root() {
@@ -132,14 +149,17 @@ EOF
 add_pacman_repo() {
     need_root
 
-    local db_url
-    db_url="$(repo_db_url)"
-
-    if ! repo_server_reachable; then
+    local selected_server db_url
+    if ! selected_server="$(select_repo_server)"; then
+        db_url="$(repo_db_url "$REPO_SERVER")"
         err "Repozytorium pacman jest niedostępne: ${db_url}"
         warn "Wygląda na to, że baza pacmana nie została opublikowana (HTTP 404)."
         warn "Użyj instalacji ze źródeł: sudo ./install-hyalode.sh --from-source"
         return 1
+    fi
+
+    if [ "$selected_server" != "$REPO_SERVER" ]; then
+        warn "GitHub Pages niedostępne; używam fallback: $selected_server"
     fi
 
     if grep -q "^\[${REPO_NAME}\]" "$PACMAN_CONF" 2>/dev/null; then
@@ -153,7 +173,7 @@ add_pacman_repo() {
 
 [${REPO_NAME}]
 SigLevel = Optional TrustAll
-Server = ${REPO_SERVER}
+Server = ${selected_server}
 EOF
 
     ok "Repozytorium dodane. Synchronizacja bazy pakietów..."
