@@ -1,99 +1,155 @@
-# HyaloOS
-Autor Patryk "MijagiKutasamoto" Szkudarek
+# HyaloDE
 
-HyaloOS is a C++-based Wayland desktop environment stack focused on a custom panel, shared JSON configuration, and a control center that reuse the same runtime foundation.
+**Nowoczesne środowisko graficzne Wayland** zbudowane w C++20 z GTK4.
 
-## Current scope
+HyaloDE to kompletny stos desktopowy — panel z launcherem i taskbarem, ekran logowania LightDM, centrum ustawień, terminal, menedżer plików, tapety i więcej. Wszystkie aplikacje współdzielą konfigurację JSON, lokalizację i motywy CSS.
 
-- `hyalo-panel`: a GTK4 panel prototype for Wayland compositors, using `gtk4-layer-shell` when available, with interactive taskbar control via `zwlr_foreign_toplevel_manager_v1` and real workspace switching via `ext_workspace_manager_v1`.
-- `hyalo-control-center`: a minimal control center shell wired to the same config and localization stack.
-- `hyalo-core`: shared runtime services for configuration, translations, and global CSS loading.
+## Komponenty
 
-## Dependencies
+| Aplikacja | Opis |
+|-----------|------|
+| **hyalo-panel** | Panel/taskbar z launcherem, zegarkiem, tray, śledzeniem okien (wlr-foreign-toplevel) |
+| **hyalo-greeter** | Ekran logowania LightDM z obsługą wielu użytkowników i sesji |
+| **hyalo-control-center** | Centrum ustawień (wygląd, klawiatura, autostart) |
+| **hyalo-terminal** | Emulator terminala (VTE/GTK4) |
+| **hyalo-files** | Menedżer plików |
+| **hyalo-wallpaper** | Ustawianie tapet |
+| **hyalo-software-store** | Sklep z oprogramowaniem |
+| **hyalo-update-center** | Centrum aktualizacji |
+| **hyalo-core** | Współdzielona biblioteka: konfiguracja, lokalizacja, CSS |
 
-- CMake 3.24+
-- gtkmm-4.0
-- gtk4-layer-shell for true layer-shell panel mode; without it `hyalo-panel` falls back to a regular GTK4 window
-- wayland-client + wayland-scanner, plus protocol XML from system packages or vendored copies in `third_party/`
-- nlohmann_json 3.11+ if available locally; otherwise CMake fetches `nlohmann/json` automatically during configure
+## Instalacja
 
-Optional runtime tools:
-
-- grim for screenshots
-- slurp for area selection screenshots
-- libnotify or another notification backend providing notify-send for screenshot completion notifications
-- mako for HyaloOS-themed notification banners in the Wayland session
-
-## Build
+### Szybka instalacja (zalecane)
 
 ```bash
-cmake -S . -B build
-cmake --build build
-```
-
-## Install
-
-For a real display-manager-visible session, use the installer script:
-
-```bash
+git clone https://github.com/mijsys/HyaloDE.git
+cd HyaloDE
 sudo ./install.sh --system
 ```
 
-This does the following:
+Instalator automatycznie:
+- Instaluje wszystkie zależności (Arch/Debian/Fedora/openSUSE)
+- Buduje wszystkie aplikacje HyaloDE (CMake) i kompozytor HyaloWM (Meson)
+- Instaluje sesję Wayland widoczną w LightDM/SDDM
+- Konfiguruje LightDM do używania hyalo-greeter
+- Uruchamia `hyalo-session` z panelem, powiadomieniami (mako), tapetami (swww) i autostarter (dex)
 
-- builds and installs the CMake-based HyaloOS applications
-- builds `hyalo-compositor` with Meson and installs only the HyaloOS/HyaloWM runtime artifacts instead of the full fallback subproject tree
-- installs a `hyalo.desktop` Wayland session entry for SDDM, LightDM, and similar display managers
-- installs a `hyalo-session` wrapper that autostarts `hyalo-panel`
-- records an install manifest at `PREFIX/share/hyalo/install-manifest.txt` for later removal
+### Interaktywny instalator
 
-For local testing without touching system directories:
+```bash
+sudo ./packaging/install-hyalode.sh
+```
+
+Oferuje menu z opcjami:
+1. Instalacja z repozytorium pacman (Arch)
+2. Budowanie ze źródeł
+3. Zarządzanie repo pacman
+4. Odinstalowanie
+
+### Instalacja lokalna (testowanie)
 
 ```bash
 ./install.sh --user
 ```
 
-If `dex` is installed, the generated session wrapper will also run XDG autostart entries for the `HyaloOS` desktop name.
-
-To remove a previous install:
+### Odinstalowanie
 
 ```bash
 sudo ./install.sh --system --remove
 ```
 
-or for a user-local test install:
+## Zależności
+
+### Budowanie
+
+| Pakiet | Wersja |
+|--------|--------|
+| CMake | ≥ 3.24 |
+| Meson + Ninja | dowolna |
+| GCC/G++ | C++20 |
+| pkg-config | dowolna |
+
+### Runtime
+
+| Pakiet (Arch) | Pakiet (Debian) | Cel |
+|---------------|-----------------|-----|
+| gtkmm-4.0 | libgtkmm-4.0-dev | GTK4 C++ |
+| gtk4-layer-shell | libgtk-4-layer-shell-dev | Wayland layer shell |
+| lightdm + liblightdm-gobject-1 | lightdm + liblightdm-gobject-1-dev | Display manager + API |
+| vte4 | libvte-2.91-gtk4-dev | Terminal |
+| gdk-pixbuf2 | libgdk-pixbuf-2.0-dev | Obrazy |
+| wayland + wayland-protocols | libwayland-dev + wayland-protocols | Protokół Wayland |
+| nlohmann-json | nlohmann-json3-dev | JSON (CMake pobiera automatycznie jeśli brak) |
+| swww | swww | Tapety |
+| mako | mako-notifier | Powiadomienia |
+| dex | dex | XDG autostart |
+| grim + slurp | grim + slurp | Zrzuty ekranu |
+| wl-clipboard | wl-clipboard | Schowek |
+
+## Skróty klawiszowe
+
+| Skrót | Akcja |
+|-------|-------|
+| `Super+Space` | Launcher |
+| `Print` | Zrzut ekranu (pełny) → `~/Pictures/Screenshots` |
+| `Shift+Print` | Zrzut ekranu (zaznaczenie) |
+
+## Konfiguracja
+
+Użytkownik może nadpisać ustawienia w `~/.config/hyalo/`:
+
+| Plik | Opis |
+|------|------|
+| `config.json` | Globalne ustawienia (język, wygląd, panel, skróty) |
+| `theme.css` | Nadpisanie motywu CSS |
+| `locales/<lang>.json` | Własne tłumaczenia |
+
+Jeśli pliki użytkownika nie istnieją, używane są wartości domyślne z `config/defaults/`.
+
+## Budowanie ręczne
 
 ```bash
-./install.sh --user --remove
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build
+sudo cmake --install build
 ```
 
-## Running
+Flagi opcjonalne:
 
-`hyalo-panel` is primarily intended for a Wayland session.
+```
+-DHYALO_BUILD_GREETER=ON/OFF
+-DHYALO_BUILD_TERMINAL=ON/OFF
+-DHYALO_BUILD_CONTROL_CENTER=ON/OFF
+-DHYALO_BUILD_UPDATE_CENTER=ON/OFF
+-DHYALO_BUILD_SOFTWARE_STORE=ON/OFF
+-DHYALO_BUILD_FILES=ON/OFF
+```
 
-- With `gtk4-layer-shell` installed, it can behave like a real edge-anchored panel.
-- Without `gtk4-layer-shell`, it falls back to a regular GTK4 window.
-- In X11 sessions, GTK may still print `libEGL` or renderer warnings depending on the local graphics stack. These warnings do not indicate a HyaloOS crash; Wayland is the recommended runtime target.
+## Struktura projektu
 
-## Default shortcuts
+```
+├── apps/                     # Aplikacje
+│   ├── hyalo-panel/          # Panel z launcherem i taskbarem
+│   ├── hyalo-greeter/        # LightDM greeter
+│   ├── hyalo-control-center/ # Ustawienia
+│   ├── hyalo-terminal/       # Terminal
+│   ├── hyalo-files/          # Menedżer plików
+│   ├── hyalo-wallpaper/      # Tapety
+│   ├── hyalo-software-store/ # Sklep
+│   └── hyalo-update-center/  # Aktualizacje
+├── assets/                   # Ikony, motywy, dekoracje
+├── config/                   # Domyślna konfiguracja + labwc + mako
+├── libs/hyalo-core/          # Współdzielona biblioteka runtime
+├── packaging/                # PKGBUILD, instalator, CI
+├── compositor/               # HyaloWM (fork labwc)
+└── third_party/              # Protokoły Wayland (submoduły)
+```
 
-- `Super+Space`: toggle Hyalo launcher
-- `Print`: save a full-screen screenshot to `~/Pictures/Screenshots`
-- `Shift+Print`: select an area and save it to `~/Pictures/Screenshots`
+## Licencja
 
-## Runtime configuration
+MIT
 
-The applications load user overrides from `~/.config/hyalo/`.
+## Autor
 
-- `config.json`: global settings
-- `theme.css`: custom CSS override
-- `locales/<lang>.json`: optional user translations
-
-If user files do not exist, defaults from the repository are used.
-
-## Workspace mapping
-
-`hyalo-panel` now reads a lightweight runtime export from the HyaloWM fork at `XDG_RUNTIME_DIR/hyalo/window-workspaces-v1.tsv`.
-
-- The compositor rewrites this file whenever a mapped window changes workspace, title, app ID, or omnipresent state.
-- The panel uses it to populate `WindowSnapshot.workspace`, so task filtering by active workspace works with real compositor data instead of placeholders.
+[MijSys](https://github.com/mijsys)
