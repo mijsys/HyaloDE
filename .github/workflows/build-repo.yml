@@ -29,7 +29,8 @@ jobs:
             vte4 gdk-pixbuf2 \
             wayland wayland-protocols wlr-protocols \
             nlohmann-json \
-            mako swww dex grim slurp wl-clipboard ttf-font-awesome \
+            mako swww dex grim slurp wl-clipboard \
+            ttf-font-awesome ttf-roboto ttf-liberation \
             fakeroot sudo
 
       - name: Checkout repository
@@ -50,7 +51,7 @@ jobs:
           fi
 
           # Build the package
-          su builder -c "makepkg --noconfirm --noprogressbar"
+          su builder -c "makepkg --syncdeps --needed --noconfirm --noprogressbar"
 
       - name: Create repo database
         run: |
