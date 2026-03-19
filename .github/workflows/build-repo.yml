@@ -6,12 +6,18 @@ on:
       - 'v*'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
       image: archlinux:latest
-    
+
     steps:
       - name: Setup Arch Linux
         run: |
@@ -19,11 +25,12 @@ jobs:
           pacman -S --noconfirm --needed \
             base-devel cmake meson ninja pkg-config git \
             gtkmm-4.0 gtk4-layer-shell \
-            lightdm liblightdm-gobject-1 \
+            lightdm \
             vte4 gdk-pixbuf2 \
             wayland wayland-protocols wlr-protocols \
             nlohmann-json \
-            fakeroot
+            mako swww dex grim slurp wl-clipboard ttf-font-awesome \
+            fakeroot sudo
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,17 +40,17 @@ jobs:
           # Create non-root user for makepkg
           useradd -m builder
           chown -R builder:builder .
-          
+
           cd packaging/arch
-          
+
           # For tagged releases, update PKGBUILD version
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
             sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
           fi
-          
+
           # Build the package
-          su builder -c "makepkg -s --noconfirm --noprogressbar"
+          su builder -c "makepkg --noconfirm --noprogressbar"
 
       - name: Create repo database
         run: |
