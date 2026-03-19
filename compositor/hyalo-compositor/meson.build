@@ -52,7 +52,7 @@ add_project_arguments('-DLABWC_VERSION=@0@'.format(version), language: 'c')
 
 wlroots = dependency(
   'wlroots-0.19',
-  default_options: ['default_library=static', 'examples=false'],
+  default_options: ['default_library=static', 'examples=false', 'c_std=c11'],
   version: ['>=0.19.0', '<0.20.0'],
 )
 
