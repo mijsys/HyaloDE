@@ -70,6 +70,7 @@ install_packages() {
             swww mako dex \
             grim slurp wl-clipboard \
             ttf-font-awesome otf-font-awesome \
+            ttf-roboto ttf-liberation \
             || true
     elif have_command apt-get; then
         # ── Debian / Ubuntu ──
@@ -84,6 +85,7 @@ install_packages() {
             swww mako-notifier dex \
             grim slurp wl-clipboard \
             fonts-font-awesome \
+            fonts-roboto fonts-liberation2 \
             || true
     elif have_command dnf; then
         # ── Fedora ──
@@ -97,6 +99,7 @@ install_packages() {
             swww mako dex \
             grim slurp wl-clipboard \
             fontawesome-fonts \
+            google-roboto-fonts liberation-sans-fonts \
             || true
     elif have_command zypper; then
         # ── openSUSE ──
@@ -110,6 +113,7 @@ install_packages() {
             nlohmann_json-devel \
             swww mako dex \
             grim slurp wl-clipboard \
+            google-roboto-fonts liberation-fonts \
             || true
     else
         printf '==> No supported package manager found (pacman/apt/dnf/zypper).\n'
@@ -635,7 +639,7 @@ COMPOSITOR_BIN="$PREFIX/bin/labwc"
 RUNTIME_LIB_DIR="$PREFIX/lib/hyalo"
 LABWC_CONFIG_DIR="$PREFIX/share/hyalo/labwc"
 MAKO_DEFAULT_CONFIG="$PREFIX/share/hyalo/mako/config"
-SESSION_STARTUP='PANEL_LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/hyalo"; mkdir -p "$PANEL_LOG_DIR"; PANEL_LOG_FILE="$PANEL_LOG_DIR/panel.log"; PANEL_CMD=""; if [ -x "$PANEL_BIN" ]; then PANEL_CMD="$PANEL_BIN"; elif command -v hyalo-panel >/dev/null 2>&1; then PANEL_CMD="hyalo-panel"; fi; if [ -n "$PANEL_CMD" ]; then ( delay=1; while :; do "$PANEL_CMD" >>"$PANEL_LOG_FILE" 2>&1; exit_code=$?; printf "[%s] hyalo-panel exited with code %s, restarting in %ss\n" "$(date +"%F %T")" "$exit_code" "$delay" >>"$PANEL_LOG_FILE"; sleep "$delay"; if [ "$delay" -lt 8 ]; then delay=$((delay * 2)); fi; done ) & fi; if command -v mako >/dev/null 2>&1 && ! pgrep -xu "$(id -u)" mako >/dev/null 2>&1; then MAKO_CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/mako/config"; if [ ! -f "$MAKO_CONFIG_PATH" ]; then MAKO_CONFIG_PATH="$MAKO_DEFAULT_CONFIG"; fi; if [ -f "$MAKO_CONFIG_PATH" ]; then mako --config "$MAKO_CONFIG_PATH" >/dev/null 2>&1 & else mako >/dev/null 2>&1 & fi; fi; if command -v swww-daemon >/dev/null 2>&1 && ! swww query >/dev/null 2>&1; then swww-daemon >/dev/null 2>&1 & fi; if [ -x "$WALLPAPER_DAEMON_BIN" ]; then HYALO_WALLPAPER_BACKEND="${HYALO_WALLPAPER_BACKEND:-auto}" "$WALLPAPER_DAEMON_BIN" --daemon >/dev/null 2>&1 & elif command -v hyalo-wallpaperd >/dev/null 2>&1; then HYALO_WALLPAPER_BACKEND="${HYALO_WALLPAPER_BACKEND:-auto}" hyalo-wallpaperd --daemon >/dev/null 2>&1 & fi; if command -v dex >/dev/null 2>&1; then dex -a -e HyaloOS >/dev/null 2>&1 & fi'
+SESSION_STARTUP='PANEL_LOG_TARGET="/dev/null"; if [ "${HYALO_PANEL_LOG:-0}" = "1" ]; then PANEL_LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/hyalo"; mkdir -p "$PANEL_LOG_DIR"; PANEL_LOG_FILE="$PANEL_LOG_DIR/panel.log"; PANEL_LOG_TARGET="$PANEL_LOG_FILE"; fi; PANEL_CMD=""; if [ -x "$PANEL_BIN" ]; then PANEL_CMD="$PANEL_BIN"; elif command -v hyalo-panel >/dev/null 2>&1; then PANEL_CMD="hyalo-panel"; fi; if [ -n "$PANEL_CMD" ]; then ( delay=1; while :; do "$PANEL_CMD" >>"$PANEL_LOG_TARGET" 2>&1; exit_code=$?; printf "[%s] hyalo-panel exited with code %s, restarting in %ss\n" "$(date +"%F %T")" "$exit_code" "$delay" >>"$PANEL_LOG_TARGET"; sleep "$delay"; if [ "$delay" -lt 8 ]; then delay=$((delay * 2)); fi; done ) & fi; if command -v mako >/dev/null 2>&1 && ! pgrep -xu "$(id -u)" mako >/dev/null 2>&1; then MAKO_CONFIG_PATH="${XDG_CONFIG_HOME:-$HOME/.config}/mako/config"; if [ ! -f "$MAKO_CONFIG_PATH" ]; then MAKO_CONFIG_PATH="$MAKO_DEFAULT_CONFIG"; fi; if [ -f "$MAKO_CONFIG_PATH" ]; then mako --config "$MAKO_CONFIG_PATH" >/dev/null 2>&1 & else mako >/dev/null 2>&1 & fi; fi; if command -v swww-daemon >/dev/null 2>&1 && ! swww query >/dev/null 2>&1; then swww-daemon >/dev/null 2>&1 & fi; if [ -x "$WALLPAPER_DAEMON_BIN" ]; then HYALO_WALLPAPER_BACKEND="${HYALO_WALLPAPER_BACKEND:-auto}" "$WALLPAPER_DAEMON_BIN" --daemon >/dev/null 2>&1 & elif command -v hyalo-wallpaperd >/dev/null 2>&1; then HYALO_WALLPAPER_BACKEND="${HYALO_WALLPAPER_BACKEND:-auto}" hyalo-wallpaperd --daemon >/dev/null 2>&1 & fi; if command -v dex >/dev/null 2>&1; then dex -a -e HyaloOS >/dev/null 2>&1 & fi'
 
 prepend_prefix_path() {
     candidate_dir=$1
@@ -646,6 +650,18 @@ prepend_prefix_path() {
         export PATH="$candidate_dir:${PATH}"
     else
         export PATH="$candidate_dir"
+    fi
+}
+
+prepend_data_dir() {
+    candidate_dir=$1
+
+    [ -d "$candidate_dir" ] || return 0
+
+    if [ -n "${XDG_DATA_DIRS:-}" ]; then
+        export XDG_DATA_DIRS="$candidate_dir:${XDG_DATA_DIRS}"
+    else
+        export XDG_DATA_DIRS="$candidate_dir:/usr/local/share:/usr/share"
     fi
 }
 
@@ -665,6 +681,11 @@ add_prefix_library_path "$RUNTIME_LIB_DIR"
 add_prefix_library_path "$PREFIX/lib"
 add_prefix_library_path "$PREFIX/lib64"
 prepend_prefix_path "$PREFIX/bin"
+prepend_data_dir "$PREFIX/share"
+
+if [ -z "${GTK_ICON_THEME:-}" ]; then
+    export GTK_ICON_THEME="${HYALO_ICON_THEME:-hyalo-icons}"
+fi
 
 if [ -z "${GSK_RENDERER:-}" ]; then
     export GSK_RENDERER="gl"

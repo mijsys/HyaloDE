@@ -7,11 +7,14 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -28,12 +31,14 @@
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
+#include <gtkmm/cssprovider.h>
 #include <gtkmm/entry.h>
 #include <gtkmm/eventcontrollerkey.h>
 #include <gtkmm/flowbox.h>
 #include <gtkmm/flowboxchild.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/image.h>
+#include <gtkmm/icontheme.h>
 #include <gtkmm/label.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/listboxrow.h>
@@ -41,8 +46,10 @@
 #include <gtkmm/popovermenu.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/separator.h>
+#include <gtkmm/settings.h>
 #include <gtkmm/spinner.h>
 #include <gtkmm/stack.h>
+#include <gtkmm/stylecontext.h>
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/window.h>
 
@@ -69,6 +76,8 @@ void configure_stable_gsk_renderer() {
 struct FileEntry {
     std::string name;
     std::string display_name;
+    std::string uri;
+    std::string trash_original_path;
     bool is_directory = false;
     bool is_hidden    = false;
     goffset size      = 0;
@@ -128,6 +137,49 @@ void post_to_main(std::function<void()> fn) {
     }, p);
 }
 
+std::string read_text_file(const std::filesystem::path& path) {
+    std::ifstream input(path);
+    if (!input.is_open()) {
+        return {};
+    }
+
+    std::ostringstream ss;
+    ss << input.rdbuf();
+    return ss.str();
+}
+
+void apply_hyalo_fallback_style(const hyalo::core::RuntimePaths& paths) {
+    const auto display = Gdk::Display::get_default();
+    if (!display) {
+        return;
+    }
+
+    const auto base_css = read_text_file(paths.assets_root / "base.css");
+    const auto theme_css = read_text_file(paths.assets_root / "hyalo.css");
+    const auto css = base_css + "\n" + theme_css;
+
+    if (!css.empty()) {
+        auto provider = Gtk::CssProvider::create();
+        provider->load_from_string(css);
+        Gtk::StyleContext::add_provider_for_display(
+            display,
+            provider,
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+    }
+
+    if (auto icon_theme = Gtk::IconTheme::get_for_display(display)) {
+        const auto icons_root = paths.assets_root.parent_path() / "icons";
+        if (std::filesystem::exists(icons_root / "hyalo-icons")) {
+            icon_theme->add_search_path(icons_root.string());
+        }
+    }
+
+    if (auto settings = Gtk::Settings::get_default()) {
+        g_object_set(settings->gobj(), "gtk-icon-theme-name", "hyalo-icons", nullptr);
+    }
+}
+
 // ---------- FileManagerWindow ----------
 
 class FileManagerWindow final : public Gtk::ApplicationWindow {
@@ -152,8 +204,11 @@ public:
 
     ~FileManagerWindow() override {
         alive_->store(false);
-        if (ctx_popover_ && ctx_popover_->get_parent()) {
-            ctx_popover_->unparent();
+        if (refresh_timeout_connection_.connected()) {
+            refresh_timeout_connection_.disconnect();
+        }
+        if (monitor_changed_connection_.connected()) {
+            monitor_changed_connection_.disconnect();
         }
         monitor_.reset();
     }
@@ -171,6 +226,9 @@ private:
         file_actions_->add_action("copy",       sigc::mem_fun(*this, &FileManagerWindow::copy_selected));
         file_actions_->add_action("cut",        sigc::mem_fun(*this, &FileManagerWindow::cut_selected));
         file_actions_->add_action("paste",      sigc::mem_fun(*this, &FileManagerWindow::paste_clipboard));
+        file_actions_->add_action("restore-selected", sigc::mem_fun(*this, &FileManagerWindow::restore_selected));
+        file_actions_->add_action("restore-all",      sigc::mem_fun(*this, &FileManagerWindow::restore_all));
+        file_actions_->add_action("delete-permanent", sigc::mem_fun(*this, &FileManagerWindow::delete_permanently_selected));
         insert_action_group("files", file_actions_);
     }
 
@@ -410,6 +468,10 @@ private:
     }
 
     void setup_context_menu() {
+        ctx_popover_ = Gtk::make_managed<Gtk::PopoverMenu>();
+        ctx_popover_->set_parent(file_grid_);
+        ctx_popover_->set_has_arrow(false);
+
         auto gesture = Gtk::GestureClick::create();
         gesture->set_button(GDK_BUTTON_SECONDARY);
         gesture->signal_pressed().connect([this](int, double x, double y) {
@@ -419,6 +481,8 @@ private:
     }
 
     // ===================== navigation =====================
+
+    bool is_trash_view() const { return current_uri_ == "trash:///"; }
 
     bool is_virtual() const { return !current_uri_.empty(); }
 
@@ -499,7 +563,7 @@ private:
     // ===================== file listing =====================
 
     void populate_files() {
-        const auto gen = ++populate_generation_;
+        const auto gen = populate_generation_.fetch_add(1, std::memory_order_relaxed) + 1;
         render_index_ = 0;
         visible_entries_.clear();
 
@@ -507,10 +571,8 @@ private:
         content_stack_.set_visible_child("loading");
         loading_spinner_.set_spinning(true);
 
-        // Clear grid off-screen (no layout cost since it's hidden behind the stack)
-        while (auto* child = file_grid_.get_first_child()) {
-            file_grid_.remove(*child);
-        }
+        // Clear grid with FlowBox API to avoid removing non-child internal widgets.
+        gtk_flow_box_remove_all(GTK_FLOW_BOX(file_grid_.gobj()));
         entries_.clear();
 
         auto location = current_location_string();
@@ -524,13 +586,16 @@ private:
                 auto gfile = use_uri ? Gio::File::create_for_uri(location)
                                      : Gio::File::create_for_path(location);
                 auto enumerator = gfile->enumerate_children(
-                    "standard::*", Gio::FileQueryInfoFlags::NOFOLLOW_SYMLINKS);
+                    "standard::*,trash::*", Gio::FileQueryInfoFlags::NOFOLLOW_SYMLINKS);
 
                 while (auto info = enumerator->next_file()) {
                     if (!alive->load()) return; // bail early if window destroyed
                     FileEntry entry;
+                    auto child_file = gfile->get_child(info->get_name());
                     entry.name         = info->get_name();
                     entry.display_name = info->get_display_name();
+                    entry.uri          = child_file ? child_file->get_uri() : std::string{};
+                    entry.trash_original_path = info->get_attribute_string("trash::orig-path");
                     entry.is_directory = (info->get_file_type() == Gio::FileType::DIRECTORY);
                     entry.is_hidden    = info->is_hidden();
                     entry.size         = info->get_size();
@@ -542,7 +607,7 @@ private:
             }
 
             post_to_main([this, gen, entries_out, error_out, alive]() {
-                if (!alive->load() || gen != populate_generation_) return;
+                if (!alive->load() || gen != populate_generation_.load(std::memory_order_relaxed)) return;
                 on_enumerate_done(gen, std::move(*entries_out), *error_out);
             });
         }).detach();
@@ -552,7 +617,7 @@ private:
                            const std::string& error) {
         loading_spinner_.set_spinning(false);
 
-        if (gen != populate_generation_) return;
+        if (gen != populate_generation_.load(std::memory_order_relaxed)) return;
 
         if (!error.empty()) {
             content_stack_.set_visible_child("grid");
@@ -568,8 +633,10 @@ private:
                 if (a.is_directory != b.is_directory)
                     return a.is_directory > b.is_directory;
                 auto la = a.display_name, lb = b.display_name;
-                std::transform(la.begin(), la.end(), la.begin(), ::tolower);
-                std::transform(lb.begin(), lb.end(), lb.begin(), ::tolower);
+                std::transform(la.begin(), la.end(), la.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                std::transform(lb.begin(), lb.end(), lb.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 return la < lb;
             });
 
@@ -584,13 +651,11 @@ private:
     }
 
     void refilter_files() {
-        ++populate_generation_;
+        const auto gen = populate_generation_.fetch_add(1, std::memory_order_relaxed) + 1;
         render_index_ = 0;
         visible_entries_.clear();
 
-        while (auto* child = file_grid_.get_first_child()) {
-            file_grid_.remove(*child);
-        }
+        gtk_flow_box_remove_all(GTK_FLOW_BOX(file_grid_.gobj()));
 
         for (const auto& entry : entries_) {
             if (!show_hidden_ && entry.is_hidden) continue;
@@ -598,11 +663,11 @@ private:
         }
 
         update_status(static_cast<int>(visible_entries_.size()));
-        render_batch(populate_generation_);
+        render_batch(gen);
     }
 
     void render_batch(unsigned int generation) {
-        if (generation != populate_generation_) return;
+        if (generation != populate_generation_.load(std::memory_order_relaxed)) return;
 
         constexpr std::size_t kBatchSize = 80;
         const auto end = std::min(render_index_ + kBatchSize, visible_entries_.size());
@@ -847,6 +912,167 @@ private:
         refresh();
     }
 
+    std::vector<const FileEntry*> selected_entries() const {
+        std::vector<const FileEntry*> out;
+        auto selected = file_grid_.get_selected_children();
+        if (selected.empty()) {
+            return out;
+        }
+
+        for (auto* child : selected) {
+            if (!child) {
+                continue;
+            }
+            const auto name = std::string(child->get_name());
+            for (const auto* entry : visible_entries_) {
+                if (entry && entry->name == name) {
+                    out.push_back(entry);
+                    break;
+                }
+            }
+        }
+
+        return out;
+    }
+
+    static std::filesystem::path unique_target_path(const std::filesystem::path& base) {
+        std::error_code ec;
+        if (!std::filesystem::exists(base, ec)) {
+            return base;
+        }
+
+        const auto stem = base.stem().string();
+        const auto ext = base.extension().string();
+        auto parent = base.parent_path();
+
+        for (int i = 1; i < 1000; ++i) {
+            const auto candidate = parent / (stem + " (" + std::to_string(i) + ")" + ext);
+            if (!std::filesystem::exists(candidate, ec)) {
+                return candidate;
+            }
+        }
+
+        return base;
+    }
+
+    void restore_selected() {
+        if (!is_trash_view()) return;
+
+        auto selected = selected_entries();
+        if (selected.empty()) return;
+
+        auto items = std::make_shared<std::vector<FileEntry>>();
+        items->reserve(selected.size());
+        for (const auto* entry : selected) {
+            if (entry) items->push_back(*entry);
+        }
+
+        auto alive = alive_;
+        status_label_.set_text("Przywracanie...");
+
+        std::thread([this, items, alive]() {
+            for (const auto& entry : *items) {
+                if (!alive->load()) return;
+                if (entry.uri.empty() || entry.trash_original_path.empty()) {
+                    continue;
+                }
+
+                try {
+                    auto src = Gio::File::create_for_uri(entry.uri);
+                    auto dst_path = unique_target_path(std::filesystem::path(entry.trash_original_path));
+                    std::error_code ec;
+                    std::filesystem::create_directories(dst_path.parent_path(), ec);
+                    auto dst = Gio::File::create_for_path(dst_path.string());
+                    src->move(dst, Gio::File::CopyFlags::NONE);
+                } catch (...) {
+                }
+            }
+
+            post_to_main([this, alive]() {
+                if (!alive->load()) return;
+                status_label_.set_text("Przywrocono zaznaczone");
+                refresh();
+            });
+        }).detach();
+    }
+
+    void restore_all() {
+        if (!is_trash_view()) return;
+
+        auto items = std::make_shared<std::vector<FileEntry>>();
+        items->reserve(visible_entries_.size());
+        for (const auto* entry : visible_entries_) {
+            if (entry) items->push_back(*entry);
+        }
+
+        if (items->empty()) return;
+
+        auto alive = alive_;
+        status_label_.set_text("Przywracanie wszystkiego...");
+
+        std::thread([this, items, alive]() {
+            for (const auto& entry : *items) {
+                if (!alive->load()) return;
+                if (entry.uri.empty() || entry.trash_original_path.empty()) {
+                    continue;
+                }
+
+                try {
+                    auto src = Gio::File::create_for_uri(entry.uri);
+                    auto dst_path = unique_target_path(std::filesystem::path(entry.trash_original_path));
+                    std::error_code ec;
+                    std::filesystem::create_directories(dst_path.parent_path(), ec);
+                    auto dst = Gio::File::create_for_path(dst_path.string());
+                    src->move(dst, Gio::File::CopyFlags::NONE);
+                } catch (...) {
+                }
+            }
+
+            post_to_main([this, alive]() {
+                if (!alive->load()) return;
+                status_label_.set_text("Przywrocono wszystko");
+                refresh();
+            });
+        }).detach();
+    }
+
+    void delete_permanently_selected() {
+        if (!is_trash_view()) return;
+
+        auto selected = selected_entries();
+        if (selected.empty()) return;
+
+        auto uris = std::make_shared<std::vector<std::string>>();
+        uris->reserve(selected.size());
+        for (const auto* entry : selected) {
+            if (entry && !entry->uri.empty()) {
+                uris->push_back(entry->uri);
+            }
+        }
+
+        if (uris->empty()) return;
+
+        auto alive = alive_;
+        status_label_.set_text("Usuwanie trwale...");
+
+        std::thread([this, uris, alive]() {
+            for (const auto& uri : *uris) {
+                if (!alive->load()) return;
+                try {
+                    auto file = Gio::File::create_for_uri(uri);
+                    file->remove();
+                } catch (...) {
+                }
+            }
+
+            post_to_main([this, alive]() {
+                if (!alive->load()) return;
+                status_label_.set_text("Usunieto trwale");
+                refresh();
+            });
+        }).detach();
+    }
+
     void copy_selected() {
         if (is_virtual()) return;
         clipboard_paths_.clear();
@@ -933,7 +1159,7 @@ private:
     }
 
     void show_location_entry() {
-        location_entry_.set_text(current_path_.string());
+        location_entry_.set_text(current_location_string());
         path_stack_.set_visible_child("entry");
         location_entry_.grab_focus();
         location_entry_.select_region(0, -1);
@@ -942,28 +1168,34 @@ private:
     // ===================== context menu =====================
 
     void show_context_popup(double x, double y) {
-        if (ctx_popover_ && ctx_popover_->get_parent()) {
-            ctx_popover_->unparent();
-        }
-
         auto menu = Gio::Menu::create();
         auto selected = file_grid_.get_selected_children();
-        if (!selected.empty()) {
-            menu->append("Otw\xc3\xb3rz",              "files.open");
-            menu->append("Kopiuj",              "files.copy");
-            menu->append("Wytnij",              "files.cut");
-            menu->append("Zmie\xc5\x84 nazw\xc4\x99",         "files.rename");
-            menu->append("Przenie\xc5\x9b do kosza",   "files.trash");
+        if (is_trash_view()) {
+            if (!selected.empty()) {
+                menu->append("Przywroc zaznaczone", "files.restore-selected");
+                menu->append("Usun trwale", "files.delete-permanent");
+            }
+            menu->append("Przywroc wszystko", "files.restore-all");
+            menu->append("Odswiez", "files.refresh");
+        } else {
+            if (!selected.empty()) {
+                menu->append("Otworz", "files.open");
+                menu->append("Kopiuj", "files.copy");
+                menu->append("Wytnij", "files.cut");
+                menu->append("Zmien nazwe", "files.rename");
+                menu->append("Przenies do kosza", "files.trash");
+            }
+            if (!clipboard_paths_.empty()) {
+                menu->append("Wklej", "files.paste");
+            }
+            menu->append("Nowy folder", "files.new-folder");
+            menu->append("Odswiez", "files.refresh");
         }
-        if (!clipboard_paths_.empty()) {
-            menu->append("Wklej",               "files.paste");
-        }
-        menu->append("Nowy folder", "files.new-folder");
-        menu->append("Od\xc5\x9bwie\xc5\xbc",     "files.refresh");
 
-        ctx_popover_ = Gtk::make_managed<Gtk::PopoverMenu>(menu);
-        ctx_popover_->set_parent(file_grid_);
-        ctx_popover_->set_has_arrow(false);
+        if (!ctx_popover_) {
+            return;
+        }
+        ctx_popover_->set_menu_model(menu);
 
         GdkRectangle rect{static_cast<int>(x), static_cast<int>(y), 1, 1};
         gtk_popover_set_pointing_to(GTK_POPOVER(ctx_popover_->gobj()), &rect);
@@ -974,6 +1206,9 @@ private:
     // ===================== directory monitoring =====================
 
     void start_monitoring() {
+        if (monitor_changed_connection_.connected()) {
+            monitor_changed_connection_.disconnect();
+        }
         monitor_.reset();
         try {
             auto gfile = is_virtual()
@@ -981,10 +1216,13 @@ private:
                 : Gio::File::create_for_path(current_path_.string());
             monitor_ = gfile->monitor_directory();
             monitor_->set_rate_limit(1000); // max 1 event per second
-            monitor_->signal_changed().connect(
-                [this](const Glib::RefPtr<Gio::File>&,
+            monitor_changed_connection_ = monitor_->signal_changed().connect(
+                [this, alive = alive_](const Glib::RefPtr<Gio::File>&,
                        const Glib::RefPtr<Gio::File>&,
                        Gio::FileMonitor::Event event) {
+                    if (!alive->load()) {
+                        return;
+                    }
                     if (event == Gio::FileMonitor::Event::CREATED
                         || event == Gio::FileMonitor::Event::DELETED
                         || event == Gio::FileMonitor::Event::RENAMED
@@ -999,9 +1237,12 @@ private:
     void schedule_refresh() {
         if (!refresh_pending_) {
             refresh_pending_ = true;
-            Glib::signal_timeout().connect_once([this]() {
+            refresh_timeout_connection_ = Glib::signal_timeout().connect([this, alive = alive_]() {
                 refresh_pending_ = false;
-                if (alive_->load()) refresh();
+                if (alive->load()) {
+                    refresh();
+                }
+                return false;
             }, 800);
         }
     }
@@ -1073,7 +1314,7 @@ private:
     std::vector<FileEntry>             entries_;
     std::vector<const FileEntry*>      visible_entries_;
     std::size_t                        render_index_        = 0;
-    unsigned int                       populate_generation_ = 0;
+    std::atomic<unsigned int>          populate_generation_{0};
 
     // Clipboard
     std::vector<std::filesystem::path> clipboard_paths_;
@@ -1085,6 +1326,8 @@ private:
     // GIO
     Glib::RefPtr<Gio::FileMonitor>      monitor_;
     Glib::RefPtr<Gio::SimpleActionGroup> file_actions_;
+    sigc::connection                    monitor_changed_connection_;
+    sigc::connection                    refresh_timeout_connection_;
 
     // Navigation / context
     Glib::RefPtr<Gtk::GestureClick>      mouse_nav_gesture_;
@@ -1100,11 +1343,14 @@ int main(int argc, char** argv) {
 
     auto app = Gtk::Application::create("org.hyalo.Files");
 
-    auto config_manager = hyalo::core::ConfigManager(hyalo::core::detect_runtime_paths());
+    const auto runtime_paths = hyalo::core::detect_runtime_paths();
+    auto config_manager = hyalo::core::ConfigManager(runtime_paths);
     if (!config_manager.load()) {
         config_manager.load_defaults();
     }
-    hyalo::core::StyleManager::apply(config_manager);
+    if (!hyalo::core::StyleManager::apply(config_manager)) {
+        apply_hyalo_fallback_style(runtime_paths);
+    }
 
     app->signal_activate().connect([&app]() {
         auto* window = new FileManagerWindow();

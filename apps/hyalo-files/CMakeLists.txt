@@ -16,3 +16,8 @@ install(FILES
     data/org.hyalo.Files.desktop
     DESTINATION share/applications
 )
+
+install(FILES
+    data/hyalo-files.css
+    DESTINATION share/hyalo
+)

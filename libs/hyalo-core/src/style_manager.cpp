@@ -1,10 +1,13 @@
 #include "hyalo-core/style_manager.hpp"
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <regex>
 #include <sstream>
 #include <vector>
+
+#include <sys/statvfs.h>
 
 #include <gdkmm/display.h>
 #include <giomm/settings.h>
@@ -29,6 +32,21 @@ std::string gtk_base_theme_name() {
 }
 
 bool system_prefers_dark() {
+    const auto* runtime_dir = std::getenv("XDG_RUNTIME_DIR");
+    if (!runtime_dir || runtime_dir[0] == '\0') {
+        return false;
+    }
+
+    struct statvfs fs_stat {};
+    if (statvfs(runtime_dir, &fs_stat) != 0) {
+        return false;
+    }
+
+    // Avoid dconf access when runtime tmpfs has no free blocks/inodes.
+    if (fs_stat.f_bavail == 0 || fs_stat.f_favail == 0) {
+        return false;
+    }
+
     try {
         const auto settings = Gio::Settings::create("org.gnome.desktop.interface");
         return settings && settings->get_string("color-scheme") == "prefer-dark";

@@ -1,29 +1,55 @@
-/*
- * Hyalo Greeter — Login screen stylesheet
- *
- * Uses the same visual language as the Hyalo desktop:
- * dark surfaces, soft glow, mint accent, Manrope typeface.
- *
- * Token palette (hardcoded — greeter runs before user config):
- *   bg:        #11161d → #1c2530
- *   card:      #1f2935
- *   accent:    #7fd6ba
- *   text:      #edf3fa / #b3c1d1
- *   border:    rgba(255,255,255,0.11)
- */
+/* Hyalo Greeter stylesheet aligned with assets/themes/pastel.css tokens. */
+
+@define-color hyalo_bg_desktop #edeae6;
+@define-color hyalo_bg_window #f9f6f3;
+@define-color hyalo_bg_panel #dff0eb;
+@define-color hyalo_bg_card #f5f1ee;
+@define-color hyalo_bg_card_alt #ede8e4;
+@define-color hyalo_bg_raised #e8e3df;
+@define-color hyalo_bg_hover #ddd5d9;
+@define-color hyalo_bg_pressed #d0c8cc;
+@define-color hyalo_bg_input #faf8f6;
+@define-color hyalo_accent #7ec8b4;
+@define-color hyalo_accent_strong #59b89f;
+@define-color hyalo_accent_contrast #0e2b25;
+@define-color hyalo_text_main #1e2c33;
+@define-color hyalo_text_secondary #5a6e75;
+@define-color hyalo_text_muted #8a9ca2;
+@define-color hyalo_border #ccd8d4;
+@define-color hyalo_border_strong #afc5bf;
+@define-color hyalo_panel_border #c4d8d2;
+@define-color hyalo_focus_ring #7ec8b4;
+@define-color hyalo_success #c6e8de;
+@define-color hyalo_success_text #0e2b25;
+@define-color hyalo_danger #f5d9d5;
+@define-color hyalo_danger_text #6e3630;
+@define-color hyalo_shadow_panel alpha(#2a2420, 0.10);
+@define-color hyalo_shadow_menu alpha(#1e1a16, 0.12);
+@define-color hyalo_shadow_modal alpha(#1a1612, 0.14);
+@define-color hyalo_overlay_subtle alpha(#ffffff, 0.40);
+@define-color hyalo_overlay_soft alpha(#ffffff, 0.60);
+@define-color hyalo_overlay_strong alpha(#ffffff, 0.80);
+@define-color hyalo_scrim alpha(#1a1612, 0.50);
+
+/* Greeter-specific pastel contrast surfaces */
+@define-color hyalo_greeter_card #e5ddd7;
+@define-color hyalo_greeter_card_alt #dbd2cc;
 
 /* ── Window & background ── */
 
 .greeter-window {
-    background-color: #11161d;
+    background-color: @hyalo_bg_desktop;
 }
 
 .greeter-background {
-    background: linear-gradient(180deg, #11161d 0%, #0d1117 100%);
+    background:
+        radial-gradient(circle at 18% 12%, alpha(@hyalo_accent, 0.16) 0%, alpha(@hyalo_accent, 0.0) 42%),
+        radial-gradient(circle at 82% 84%, alpha(@hyalo_bg_raised, 0.22) 0%, alpha(@hyalo_bg_raised, 0.0) 38%),
+    linear-gradient(165deg, @hyalo_bg_desktop 0%, @hyalo_bg_window 44%, @hyalo_bg_panel 100%);
 }
 
 .greeter-wallpaper {
-    opacity: 0.35;
+    opacity: 0.18;
 }
 
 .greeter-content {
@@ -33,38 +59,61 @@
 /* ── Clock ── */
 
 .greeter-clock-area {
-    margin-bottom: 16px;
+    margin-bottom: 22px;
 }
 
 .greeter-clock {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 72px;
     font-weight: 200;
     letter-spacing: -0.03em;
-    color: #edf3fa;
-    text-shadow: 0 2px 24px rgba(127, 214, 186, 0.10);
+    color: @hyalo_text_main;
+    text-shadow: 0 2px 24px alpha(@hyalo_accent, 0.10);
 }
 
 .greeter-date {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 16px;
     font-weight: 500;
     letter-spacing: 0.04em;
-    color: rgba(179, 193, 209, 0.85);
+    color: alpha(@hyalo_text_secondary, 0.90);
     text-transform: capitalize;
+}
+
+.greeter-greeting {
+    margin-top: 10px;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: @hyalo_text_main;
+    text-shadow: 0 2px 18px alpha(@hyalo_shadow_modal, 0.28);
+}
+
+.greeter-insight {
+    margin-top: 6px;
+    max-width: 660px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: alpha(@hyalo_text_secondary, 0.92);
+    background: alpha(@hyalo_greeter_card_alt, 0.64);
+    border: 1px solid alpha(@hyalo_border_strong, 0.90);
 }
 
 /* ── Login card ── */
 
 .greeter-card {
-    background-color: rgba(31, 41, 53, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: alpha(@hyalo_greeter_card, 0.94);
+    border: 1px solid @hyalo_border_strong;
     border-radius: 24px;
-    padding: 12px 0;
+    padding: 12px 0 8px;
     box-shadow:
-        0 8px 40px rgba(4, 7, 13, 0.45),
-        0 1px 3px rgba(4, 7, 13, 0.30),
-        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        0 14px 30px @hyalo_shadow_modal,
+        inset 0 1px 0 alpha(@hyalo_overlay_subtle, 0.7);
     min-width: 380px;
 }
 
@@ -83,12 +132,12 @@
 }
 
 .greeter-user-btn:hover {
-    background-color: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.08);
+    background-color: alpha(@hyalo_overlay_soft, 0.90);
+    border-color: alpha(@hyalo_border, 0.60);
 }
 
 .greeter-user-btn:active {
-    background-color: rgba(127, 214, 186, 0.10);
+    background-color: alpha(@hyalo_accent, 0.14);
 }
 
 .greeter-user-row {
@@ -97,16 +146,16 @@
 
 .greeter-user-row-avatar {
     border-radius: 999px;
-    background-color: rgba(43, 55, 70, 0.80);
+    background-color: alpha(@hyalo_bg_raised, 0.82);
     min-width: 36px;
     min-height: 36px;
 }
 
 .greeter-user-row-name {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 14px;
     font-weight: 600;
-    color: #edf3fa;
+    color: @hyalo_text_main;
 }
 
 /* ── Avatar ── */
@@ -117,23 +166,23 @@
 
 .greeter-avatar {
     border-radius: 999px;
-    background-color: rgba(43, 55, 70, 0.80);
-    border: 2px solid rgba(127, 214, 186, 0.25);
+    background-color: alpha(@hyalo_bg_raised, 0.82);
+    border: 2px solid alpha(@hyalo_accent, 0.32);
     padding: 6px;
     min-width: 80px;
     min-height: 80px;
     box-shadow:
-        0 4px 16px rgba(127, 214, 186, 0.08),
-        0 0 0 4px rgba(127, 214, 186, 0.04);
+        0 4px 16px alpha(@hyalo_accent, 0.08),
+        0 0 0 4px alpha(@hyalo_accent, 0.04);
     transition: border-color 250ms ease-out, box-shadow 250ms ease-out;
-    color: rgba(237, 243, 250, 0.5);
+    color: alpha(@hyalo_text_main, 0.5);
 }
 
 .greeter-username {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: #edf3fa;
+    color: @hyalo_text_main;
     letter-spacing: 0.01em;
 }
 
@@ -149,68 +198,69 @@
 
 .greeter-password,
 .greeter-password text {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 14px;
     min-height: 42px;
     padding: 0 14px;
     border-radius: 12px;
-    background-color: rgba(32, 42, 54, 0.90);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    color: #edf3fa;
-    caret-color: #7fd6ba;
+    background-color: alpha(@hyalo_bg_input, 0.92);
+    border: 1px solid @hyalo_border;
+    color: @hyalo_text_main;
+    caret-color: @hyalo_accent;
     transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
 .greeter-password:focus-within {
-    border-color: rgba(127, 214, 186, 0.50);
-    box-shadow: 0 0 0 3px rgba(127, 214, 186, 0.12);
+    border-color: alpha(@hyalo_accent, 0.54);
+    box-shadow: 0 0 0 3px alpha(@hyalo_focus_ring, 0.35);
     outline: none;
 }
 
 .greeter-password image {
-    color: rgba(179, 193, 209, 0.50);
+    color: alpha(@hyalo_text_secondary, 0.56);
 }
 
 .greeter-login-btn {
     min-width: 42px;
     min-height: 42px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #7fd6ba 0%, #62c5a6 100%);
+    background: @hyalo_accent;
     border: none;
-    color: #0f2a22;
+    color: @hyalo_accent_contrast;
     box-shadow:
-        0 2px 8px rgba(127, 214, 186, 0.20),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        0 2px 8px alpha(@hyalo_accent, 0.20),
+        inset 0 1px 0 alpha(#ffffff, 0.12);
     transition: background 150ms ease-out, box-shadow 150ms ease-out, transform 100ms;
 }
 
 .greeter-login-btn:hover {
+    background: @hyalo_accent_strong;
     box-shadow:
-        0 3px 14px rgba(127, 214, 186, 0.30),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        0 3px 14px alpha(@hyalo_accent, 0.28),
+        inset 0 1px 0 alpha(#ffffff, 0.16);
 }
 
 .greeter-login-btn:active {
     transform: scale(0.96);
     box-shadow:
-        0 1px 4px rgba(127, 214, 186, 0.16);
+        0 1px 4px alpha(@hyalo_accent, 0.16);
 }
 
 /* ── Messages ── */
 
 .greeter-message {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 12px;
     font-weight: 500;
     min-height: 16px;
 }
 
 .greeter-error {
-    color: #ff9b9b;
+    color: @hyalo_danger_text;
 }
 
 .greeter-info {
-    color: rgba(179, 193, 209, 0.85);
+    color: alpha(@hyalo_text_secondary, 0.90);
 }
 
 /* ── Session selector ── */
@@ -221,27 +271,27 @@
 }
 
 .greeter-session-label {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(179, 193, 209, 0.70);
+    color: alpha(@hyalo_text_secondary, 0.74);
     letter-spacing: 0.04em;
 }
 
 .greeter-session-combo {
-    font-family: "Manrope", "Inter", sans-serif;
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
     font-size: 12px;
     min-height: 32px;
     border-radius: 10px;
-    background-color: rgba(32, 42, 54, 0.70);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #edf3fa;
+    background-color: alpha(@hyalo_bg_input, 0.82);
+    border: 1px solid @hyalo_border;
+    color: @hyalo_text_main;
     padding: 0 10px;
 }
 
 .greeter-session-combo:hover {
-    background-color: rgba(32, 42, 54, 0.90);
-    border-color: rgba(255, 255, 255, 0.12);
+    background-color: alpha(@hyalo_bg_input, 0.94);
+    border-color: @hyalo_border_strong;
 }
 
 .greeter-session-combo button {
@@ -252,11 +302,11 @@
 }
 
 .greeter-session-combo popover contents {
-    background-color: rgba(31, 41, 53, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: alpha(@hyalo_bg_card, 0.96);
+    border: 1px solid @hyalo_border;
     border-radius: 12px;
     padding: 4px;
-    box-shadow: 0 6px 24px rgba(4, 7, 13, 0.40);
+    box-shadow: 0 6px 24px @hyalo_shadow_menu;
 }
 
 .greeter-session-combo row {
@@ -266,56 +316,81 @@
 }
 
 .greeter-session-combo row:hover {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: alpha(@hyalo_overlay_soft, 0.95);
 }
 
 .greeter-session-combo row:selected {
-    background-color: rgba(127, 214, 186, 0.14);
+    background-color: alpha(@hyalo_accent, 0.14);
 }
 
 /* ── Power buttons ── */
 
 .greeter-power-area {
-    border-spacing: 16px;
+    border-spacing: 12px;
+    padding: 12px 14px;
+    border-radius: 20px;
+    background-color: alpha(@hyalo_greeter_card_alt, 0.86);
+    border: 1px solid alpha(@hyalo_border_strong, 0.92);
+    box-shadow:
+        inset 0 1px 0 alpha(@hyalo_overlay_subtle, 0.8),
+        0 10px 26px @hyalo_shadow_panel;
 }
 
 .greeter-power-btn {
-    min-width: 44px;
-    min-height: 44px;
-    border-radius: 999px;
-    background-color: rgba(31, 41, 53, 0.60);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(237, 243, 250, 0.70);
+    min-width: 96px;
+    min-height: 72px;
+    border-radius: 18px;
+    padding: 8px 8px;
+    background: alpha(@hyalo_bg_raised, 0.72);
+    border: 1px solid @hyalo_border;
+    color: @hyalo_text_main;
     transition: background 150ms ease-out, color 150ms ease-out,
                 border-color 150ms ease-out, box-shadow 150ms ease-out;
-    box-shadow: 0 2px 8px rgba(4, 7, 13, 0.20);
+    box-shadow:
+        0 3px 14px @hyalo_shadow_panel,
+        inset 0 1px 0 alpha(@hyalo_overlay_subtle, 0.7);
 }
 
 .greeter-power-btn:hover {
-    background-color: rgba(43, 55, 70, 0.85);
-    color: #edf3fa;
-    border-color: rgba(255, 255, 255, 0.14);
-    box-shadow: 0 3px 12px rgba(4, 7, 13, 0.30);
+    background: @hyalo_bg_hover;
+    color: @hyalo_text_main;
+    border-color: @hyalo_border_strong;
+    box-shadow:
+        0 8px 22px @hyalo_shadow_modal,
+        inset 0 1px 0 alpha(@hyalo_overlay_soft, 0.8);
 }
 
 .greeter-power-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.97);
+}
+
+.greeter-power-icon {
+    margin-bottom: 2px;
+}
+
+.greeter-power-label {
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: alpha(@hyalo_text_main, 0.90);
 }
 
 .greeter-power-shutdown:hover {
-    background-color: rgba(114, 70, 74, 0.70);
-    border-color: rgba(255, 155, 155, 0.20);
-    color: #ff9b9b;
+    background: alpha(@hyalo_danger, 0.88);
+    border-color: alpha(@hyalo_danger_text, 0.20);
+    color: @hyalo_danger_text;
 }
 
 .greeter-power-restart:hover {
-    background-color: rgba(70, 100, 114, 0.70);
-    border-color: rgba(127, 214, 186, 0.20);
-    color: #7fd6ba;
+    background: alpha(@hyalo_accent, 0.24);
+    border-color: alpha(@hyalo_accent, 0.35);
+    color: @hyalo_accent;
 }
 
 .greeter-power-suspend:hover {
-    background-color: rgba(100, 90, 60, 0.70);
-    border-color: rgba(255, 215, 130, 0.20);
-    color: #ffd782;
+    background: alpha(@hyalo_bg_pressed, 0.86);
+    border-color: alpha(@hyalo_border_strong, 0.9);
+    color: @hyalo_text_main;
 }
