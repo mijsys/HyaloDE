@@ -1,6 +1,6 @@
 # Maintainer: MijSys <https://github.com/mijsys>
 pkgname=hyalode-git
-pkgver=0.2.2.r0.g0000000
+pkgver=0.2.3.r0.g0000000
 pkgrel=1
 pkgdesc="HyaloDE — Modern Wayland Desktop Environment (git version)"
 arch=('x86_64' 'aarch64')
@@ -21,6 +21,8 @@ depends=(
     'slurp'
     'wl-clipboard'
     'ttf-font-awesome'
+    'ttf-roboto'
+    'ttf-liberation'
 )
 makedepends=(
     'cmake'
@@ -39,7 +41,7 @@ sha256sums=('SKIP')
 pkgver() {
     cd "${srcdir}/${pkgname}"
     git describe --long --tags 2>/dev/null | sed 's/^v//;s/-/.r/;s/-/./g' \
-        || printf "0.2.2.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+        || printf "0.2.3.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
 }
 
 build() {

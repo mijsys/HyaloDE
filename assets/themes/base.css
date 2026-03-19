@@ -4,6 +4,10 @@
  * Token contract: see pastel.css (or active theme file).
  */
 
+* {
+    font-family: "Roboto", "Arial", "Liberation Sans", sans-serif;
+}
+
 #hyalo-panel,
 .hyalo-panel {
     background-color: @hyalo_bg_panel;

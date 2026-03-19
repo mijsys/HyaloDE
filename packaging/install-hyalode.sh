@@ -217,7 +217,7 @@ install_deps_arch() {
         nlohmann-json \
         swww mako dex \
         grim slurp wl-clipboard \
-        ttf-font-awesome \
+        ttf-font-awesome ttf-roboto ttf-liberation \
         || true
 }
 
@@ -233,7 +233,7 @@ install_deps_debian() {
         nlohmann-json3-dev \
         swww mako-notifier dex \
         grim slurp wl-clipboard \
-        fonts-font-awesome \
+        fonts-font-awesome fonts-roboto fonts-liberation2 \
         || true
 }
 
@@ -248,7 +248,7 @@ install_deps_fedora() {
         json-devel \
         swww mako dex \
         grim slurp wl-clipboard \
-        fontawesome-fonts \
+        fontawesome-fonts google-roboto-fonts liberation-sans-fonts \
         || true
 }
 

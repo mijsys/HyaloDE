@@ -70,6 +70,7 @@ install_packages() {
             swww mako dex \
             grim slurp wl-clipboard \
             ttf-font-awesome otf-font-awesome \
+            ttf-roboto ttf-liberation \
             || true
     elif have_command apt-get; then
         # ── Debian / Ubuntu ──
@@ -84,6 +85,7 @@ install_packages() {
             swww mako-notifier dex \
             grim slurp wl-clipboard \
             fonts-font-awesome \
+            fonts-roboto fonts-liberation2 \
             || true
     elif have_command dnf; then
         # ── Fedora ──
@@ -97,6 +99,7 @@ install_packages() {
             swww mako dex \
             grim slurp wl-clipboard \
             fontawesome-fonts \
+            google-roboto-fonts liberation-sans-fonts \
             || true
     elif have_command zypper; then
         # ── openSUSE ──
@@ -110,6 +113,7 @@ install_packages() {
             nlohmann_json-devel \
             swww mako dex \
             grim slurp wl-clipboard \
+            google-roboto-fonts liberation-fonts \
             || true
     else
         printf '==> No supported package manager found (pacman/apt/dnf/zypper).\n'
