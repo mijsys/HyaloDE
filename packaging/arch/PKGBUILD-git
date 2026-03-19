@@ -151,6 +151,8 @@ LABWC_CONFIG_DIR="$PREFIX/share/hyalo/labwc"
 MAKO_DEFAULT_CONFIG="$PREFIX/share/hyalo/mako/config"
 
 [ -d "$RUNTIME_LIB_DIR" ] && export LD_LIBRARY_PATH="$RUNTIME_LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+[ -n "${XDG_DATA_DIRS:-}" ] && export XDG_DATA_DIRS="$PREFIX/share:${XDG_DATA_DIRS}" || export XDG_DATA_DIRS="$PREFIX/share:/usr/local/share:/usr/share"
+[ -z "${GTK_ICON_THEME:-}" ] && export GTK_ICON_THEME="${HYALO_ICON_THEME:-hyalo-icons}"
 [ -z "${GSK_RENDERER:-}" ] && export GSK_RENDERER="gl"
 [ -z "${GDK_DISABLE:-}" ] && export GDK_DISABLE="vulkan"
 

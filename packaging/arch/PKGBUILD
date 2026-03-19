@@ -173,6 +173,14 @@ add_prefix_library_path "$PREFIX/lib"
 add_prefix_library_path "$PREFIX/lib64"
 prepend_prefix_path "$PREFIX/bin"
 
+if [ -n "${XDG_DATA_DIRS:-}" ]; then
+    export XDG_DATA_DIRS="$PREFIX/share:${XDG_DATA_DIRS}"
+else
+    export XDG_DATA_DIRS="$PREFIX/share:/usr/local/share:/usr/share"
+fi
+
+[ -z "${GTK_ICON_THEME:-}" ] && export GTK_ICON_THEME="${HYALO_ICON_THEME:-hyalo-icons}"
+
 [ -z "${GSK_RENDERER:-}" ] && export GSK_RENDERER="gl"
 [ -z "${GDK_DISABLE:-}" ] && export GDK_DISABLE="vulkan"
 

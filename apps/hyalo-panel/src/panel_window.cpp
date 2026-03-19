@@ -997,7 +997,7 @@ PanelWindow::PanelWindow(core::ConfigManager& config_manager, const core::Locali
     empty_state_apps_box_.set_hexpand(true);
     empty_state_apps_box_.set_halign(Gtk::Align::FILL);
 
-    menu_button_icon_.set_from_icon_name("hyalo-symbolic");
+    menu_button_icon_.set_from_icon_name("hyalo");
     menu_button_icon_.set_pixel_size(20);
     menu_button_icon_.add_css_class("panel-brand-icon");
     menu_button_content_.add_css_class("panel-brand-content");
@@ -1010,7 +1010,7 @@ PanelWindow::PanelWindow(core::ConfigManager& config_manager, const core::Locali
         toggle_launcher();
     });
 
-    settings_button_.set_child(make_button_content("hyalo-control-center-symbolic", localization_.translate("settings")));
+    settings_button_.set_child(make_button_content("hyalo-control-center", localization_.translate("settings")));
     settings_button_.add_css_class("panel-utility-button");
 
     clock_label_.add_css_class("panel-clock-label");
@@ -1372,7 +1372,7 @@ void PanelWindow::configure_quick_panel() {
         localization_.translate("settings"),
         "quick-panel-action accent",
         "hyalo-control-center",
-        "hyalo-control-center-symbolic");
+        "hyalo-control-center");
     configure_action_button(
         quick_panel_logout_button_,
         localization_.translate("launcher_power_logout"),
@@ -1487,7 +1487,7 @@ void PanelWindow::configure_launcher() {
     launcher_apps_title_label_.set_halign(Gtk::Align::START);
     launcher_apps_title_label_.add_css_class("launcher-section-label");
 
-    launcher_settings_button_.set_child(make_button_content("hyalo-control-center-symbolic", localization_.translate("settings"), 18));
+    launcher_settings_button_.set_child(make_button_content("hyalo-control-center", localization_.translate("settings"), 18));
     launcher_settings_button_.add_css_class("launcher-sidebar-action");
     launcher_settings_button_.signal_clicked().connect([this]() {
         handle_settings_activated();

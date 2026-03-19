@@ -649,6 +649,18 @@ prepend_prefix_path() {
     fi
 }
 
+prepend_data_dir() {
+    candidate_dir=$1
+
+    [ -d "$candidate_dir" ] || return 0
+
+    if [ -n "${XDG_DATA_DIRS:-}" ]; then
+        export XDG_DATA_DIRS="$candidate_dir:${XDG_DATA_DIRS}"
+    else
+        export XDG_DATA_DIRS="$candidate_dir:/usr/local/share:/usr/share"
+    fi
+}
+
 add_prefix_library_path() {
     candidate_dir=$1
 
@@ -665,6 +677,11 @@ add_prefix_library_path "$RUNTIME_LIB_DIR"
 add_prefix_library_path "$PREFIX/lib"
 add_prefix_library_path "$PREFIX/lib64"
 prepend_prefix_path "$PREFIX/bin"
+prepend_data_dir "$PREFIX/share"
+
+if [ -z "${GTK_ICON_THEME:-}" ]; then
+    export GTK_ICON_THEME="${HYALO_ICON_THEME:-hyalo-icons}"
+fi
 
 if [ -z "${GSK_RENDERER:-}" ]; then
     export GSK_RENDERER="gl"
