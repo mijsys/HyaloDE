@@ -431,7 +431,7 @@ button.accent:disabled {
 }
 
 .panel-brand-content {
-    spacing: 4px;
+    padding-left: 4px;
 }
 
 .panel-brand-icon {
@@ -809,7 +809,6 @@ button.accent:disabled {
     border-radius: 6px;
     border: none;
     background: @hyalo_bg_raised;
-    overflow: hidden;
     transition: background 180ms ease-out;
 }
 
@@ -2372,7 +2371,6 @@ button.accent:disabled {
     border-radius: 8px;
     padding: 4px 2px;
     min-width: 80px;
-    max-width: 88px;
     transition: background-color 120ms ease-out, border-color 120ms ease-out;
 }
 

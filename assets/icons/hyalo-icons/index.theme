@@ -1,7 +1,7 @@
 [Icon Theme]
 Name=Hyalo Icons
 Comment=Colorful line-art icons for HyaloOS
-Inherits=hicolor,Adwaita
+Inherits=Adwaita,hicolor
 Directories=scalable/apps
 
 [scalable/apps]
