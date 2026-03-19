@@ -32,7 +32,6 @@ makedepends=(
     'git'
 )
 optdepends=(
-    'hyalode-compositor: HyaloWM labwc-based compositor'
     'sddm: Alternative display manager'
     'nwg-look: GTK theme configuration'
 )
@@ -55,12 +54,50 @@ build() {
         -DHYALO_BUILD_FILES=ON
 
     cmake --build build
+
+    meson setup build-compositor compositor/hyalo-compositor \
+        --prefix /usr \
+        -Dhyalo-session-integration=false
+    meson compile -C build-compositor
 }
 
 package() {
     cd "${srcdir}/HyaloDE-${pkgver}"
 
     DESTDIR="${pkgdir}" cmake --install build
+
+    # HyaloWM compositor artifacts (vendored in this repo)
+    install -Dm755 build-compositor/labwc "${pkgdir}/usr/bin/labwc"
+    if [ -f build-compositor/clients/labnag ]; then
+        install -Dm755 build-compositor/clients/labnag "${pkgdir}/usr/bin/labnag"
+    fi
+    install -Dm755 compositor/hyalo-compositor/clients/lab-sensible-terminal \
+        "${pkgdir}/usr/bin/lab-sensible-terminal"
+
+    # Runtime libs required by the bundled compositor build
+    install -d "${pkgdir}/usr/lib/hyalo"
+    install -Dm755 build-compositor/subprojects/seatd/libseat.so.1 \
+        "${pkgdir}/usr/lib/hyalo/libseat.so.1"
+    ln -sf libseat.so.1 "${pkgdir}/usr/lib/hyalo/libseat.so"
+    if [ -f build-compositor/subprojects/libdisplay-info/libdisplay-info.so.0.4.0 ]; then
+        install -Dm755 build-compositor/subprojects/libdisplay-info/libdisplay-info.so.0.4.0 \
+            "${pkgdir}/usr/lib/hyalo/libdisplay-info.so.0.4.0"
+        ln -sf libdisplay-info.so.0.4.0 "${pkgdir}/usr/lib/hyalo/libdisplay-info.so.4"
+        ln -sf libdisplay-info.so.4 "${pkgdir}/usr/lib/hyalo/libdisplay-info.so"
+    fi
+    if [ -f build-compositor/subprojects/libliftoff/libliftoff.so.0.6.0 ]; then
+        install -Dm755 build-compositor/subprojects/libliftoff/libliftoff.so.0.6.0 \
+            "${pkgdir}/usr/lib/hyalo/libliftoff.so.0.6.0"
+        ln -sf libliftoff.so.0.6.0 "${pkgdir}/usr/lib/hyalo/libliftoff.so.0"
+        ln -sf libliftoff.so.0 "${pkgdir}/usr/lib/hyalo/libliftoff.so"
+    fi
+
+    install -Dm644 compositor/hyalo-compositor/data/labwc-portals.conf \
+        "${pkgdir}/usr/share/xdg-desktop-portal/labwc-portals.conf"
+    install -Dm644 compositor/hyalo-compositor/data/labwc-symbolic.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/apps/labwc-symbolic.svg"
+    install -Dm644 compositor/hyalo-compositor/data/labwc.svg \
+        "${pkgdir}/usr/share/icons/hicolor/scalable/apps/labwc.svg"
 
     # Session desktop entry
     install -Dm644 /dev/stdin "${pkgdir}/usr/share/wayland-sessions/hyalo.desktop" <<EOF
@@ -171,5 +208,10 @@ SESSIONEOF
     # License
     if [ -f LICENSE ]; then
         install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    fi
+
+    if [ -f compositor/hyalo-compositor/LICENSE ]; then
+        install -Dm644 compositor/hyalo-compositor/LICENSE \
+            "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-labwc"
     fi
 }
