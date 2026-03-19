@@ -181,7 +181,7 @@ sudo pacman -Rns hyalode
 # HyaloDE — Modern Wayland Desktop Environment
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mijsys/HyaloDE/main/assets/hyalo.svg" alt="HyaloDE" width="600">
+  <img src="https://raw.githubusercontent.com/mijsys/HyaloDE/main/assets/banner.png" alt="HyaloDE" width="600">
 </p>
 
 **HyaloDE** is a modern Wayland desktop environment built with C++20 and GTK4. It includes a custom panel, launcher, control center, terminal, file manager, LightDM greeter and more.

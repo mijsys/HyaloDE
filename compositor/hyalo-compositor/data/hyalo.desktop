@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=HyaloOS
+Comment=HyaloOS Wayland session powered by HyaloWM
+Exec=hyalo-session
+Icon=hyalo
+Type=Application
+DesktopNames=HyaloOS;HyaloWM;wlroots
