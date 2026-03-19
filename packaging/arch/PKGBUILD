@@ -39,11 +39,16 @@ optdepends=(
 )
 provides=('hyalode')
 conflicts=('hyalode-git')
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/mijsys/HyaloDE/archive/refs/tags/v${pkgver}.tar.gz")
+source=("${pkgname}::git+https://github.com/mijsys/HyaloDE.git#tag=v${pkgver}")
 sha256sums=('SKIP')
 
+prepare() {
+    cd "${srcdir}/${pkgname}"
+    git submodule update --init --recursive
+}
+
 build() {
-    cd "${srcdir}/HyaloDE-${pkgver}"
+    cd "${srcdir}/${pkgname}"
 
     cmake -S . -B build \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -64,7 +69,7 @@ build() {
 }
 
 package() {
-    cd "${srcdir}/HyaloDE-${pkgver}"
+    cd "${srcdir}/${pkgname}"
 
     DESTDIR="${pkgdir}" cmake --install build
 
