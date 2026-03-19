@@ -162,10 +162,14 @@ fi
 export XDG_SESSION_DESKTOP="HyaloDE"
 
 SESSION_STARTUP='
-PANEL_LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/hyalo"; mkdir -p "$PANEL_LOG_DIR"
-PANEL_LOG_FILE="$PANEL_LOG_DIR/panel.log"
+PANEL_LOG_TARGET="/dev/null"
+if [ "${HYALO_PANEL_LOG:-0}" = "1" ]; then
+    PANEL_LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/hyalo"; mkdir -p "$PANEL_LOG_DIR"
+    PANEL_LOG_FILE="$PANEL_LOG_DIR/panel.log"
+    PANEL_LOG_TARGET="$PANEL_LOG_FILE"
+fi
 if [ -x "'"$PANEL_BIN"'" ]; then
-    ( delay=1; while :; do "'"$PANEL_BIN"'" >>"$PANEL_LOG_FILE" 2>&1; ec=$?; sleep "$delay"; [ "$delay" -lt 8 ] && delay=$((delay * 2)); done ) &
+    ( delay=1; while :; do "'"$PANEL_BIN"'" >>"$PANEL_LOG_TARGET" 2>&1; ec=$?; sleep "$delay"; [ "$delay" -lt 8 ] && delay=$((delay * 2)); done ) &
 fi
 command -v mako >/dev/null 2>&1 && ! pgrep -xu "$(id -u)" mako >/dev/null 2>&1 && mako >/dev/null 2>&1 &
 command -v swww-daemon >/dev/null 2>&1 && ! swww query >/dev/null 2>&1 && swww-daemon >/dev/null 2>&1 &
