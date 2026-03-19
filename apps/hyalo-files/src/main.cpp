@@ -10,9 +10,11 @@
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -36,6 +38,7 @@
 #include <gtkmm/flowboxchild.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/image.h>
+#include <gtkmm/icontheme.h>
 #include <gtkmm/label.h>
 #include <gtkmm/listbox.h>
 #include <gtkmm/listboxrow.h>
@@ -43,6 +46,7 @@
 #include <gtkmm/popovermenu.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/separator.h>
+#include <gtkmm/settings.h>
 #include <gtkmm/spinner.h>
 #include <gtkmm/stack.h>
 #include <gtkmm/stylecontext.h>
@@ -131,64 +135,46 @@ void post_to_main(std::function<void()> fn) {
     }, p);
 }
 
-void configure_hyalo_icon_theme_fallback() {
-    auto* display = gdk_display_get_default();
-    if (!display) {
-        return;
+std::string read_text_file(const std::filesystem::path& path) {
+    std::ifstream input(path);
+    if (!input.is_open()) {
+        return {};
     }
 
-    auto* icon_theme = gtk_icon_theme_get_for_display(display);
-    if (!icon_theme) {
-        return;
-    }
-
-    const char* theme_roots[] = {
-        "/usr/share/icons",
-        "/usr/local/share/icons",
-        nullptr
-    };
-
-    for (auto** root = theme_roots; *root; ++root) {
-        if (g_file_test(*root, G_FILE_TEST_IS_DIR)) {
-            gtk_icon_theme_add_search_path(icon_theme, *root);
-        }
-    }
-
-    if (g_file_test("/usr/share/icons/hyalo-icons/index.theme", G_FILE_TEST_EXISTS)
-        || g_file_test("/usr/local/share/icons/hyalo-icons/index.theme", G_FILE_TEST_EXISTS)) {
-        gtk_icon_theme_set_theme_name(icon_theme, "hyalo-icons");
-    }
+    std::ostringstream ss;
+    ss << input.rdbuf();
+    return ss.str();
 }
 
-void load_hyalo_files_css() {
-    auto provider = Gtk::CssProvider::create();
+void apply_hyalo_fallback_style(const hyalo::core::RuntimePaths& paths) {
     const auto display = Gdk::Display::get_default();
     if (!display) {
         return;
     }
 
-    std::vector<std::filesystem::path> candidates = {
-        "/usr/share/hyalo/hyalo-files.css",
-        "/usr/local/share/hyalo/hyalo-files.css",
-        std::filesystem::current_path() / "apps" / "hyalo-files" / "data" / "hyalo-files.css"
-    };
+    const auto base_css = read_text_file(paths.assets_root / "base.css");
+    const auto theme_css = read_text_file(paths.assets_root / "hyalo.css");
+    const auto css = base_css + "\n" + theme_css;
 
-    for (const auto& path : candidates) {
-        std::error_code ec;
-        if (!std::filesystem::exists(path, ec)) {
-            continue;
+    if (!css.empty()) {
+        auto provider = Gtk::CssProvider::create();
+        provider->load_from_string(css);
+        Gtk::StyleContext::add_provider_for_display(
+            display,
+            provider,
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+    }
+
+    if (auto icon_theme = Gtk::IconTheme::get_for_display(display)) {
+        const auto icons_root = paths.assets_root.parent_path() / "icons";
+        if (std::filesystem::exists(icons_root / "hyalo-icons")) {
+            icon_theme->add_search_path(icons_root.string());
         }
-        try {
-            provider->load_from_path(path.string());
-            Gtk::StyleContext::add_provider_for_display(
-                display,
-                provider,
-                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1
-            );
-            return;
-        } catch (...) {
-            // Try next candidate path.
-        }
+    }
+
+    if (auto settings = Gtk::Settings::get_default()) {
+        g_object_set(settings->gobj(), "gtk-icon-theme-name", "hyalo-icons", nullptr);
     }
 }
 
@@ -216,6 +202,12 @@ public:
 
     ~FileManagerWindow() override {
         alive_->store(false);
+        if (refresh_timeout_connection_.connected()) {
+            refresh_timeout_connection_.disconnect();
+        }
+        if (monitor_changed_connection_.connected()) {
+            monitor_changed_connection_.disconnect();
+        }
         if (ctx_popover_ && ctx_popover_->get_parent()) {
             ctx_popover_->unparent();
         }
@@ -563,13 +555,7 @@ private:
     // ===================== file listing =====================
 
     void populate_files() {
-        if (populate_in_progress_) {
-            populate_queued_ = true;
-            return;
-        }
-
-        populate_in_progress_ = true;
-        const auto gen = ++populate_generation_;
+        const auto gen = populate_generation_.fetch_add(1, std::memory_order_relaxed) + 1;
         render_index_ = 0;
         visible_entries_.clear();
 
@@ -612,7 +598,7 @@ private:
             }
 
             post_to_main([this, gen, entries_out, error_out, alive]() {
-                if (!alive->load() || gen != populate_generation_) return;
+                if (!alive->load() || gen != populate_generation_.load(std::memory_order_relaxed)) return;
                 on_enumerate_done(gen, std::move(*entries_out), *error_out);
             });
         }).detach();
@@ -621,15 +607,8 @@ private:
     void on_enumerate_done(unsigned int gen, std::vector<FileEntry> new_entries,
                            const std::string& error) {
         loading_spinner_.set_spinning(false);
-        populate_in_progress_ = false;
 
-        if (gen != populate_generation_) {
-            if (populate_queued_) {
-                populate_queued_ = false;
-                populate_files();
-            }
-            return;
-        }
+        if (gen != populate_generation_.load(std::memory_order_relaxed)) return;
 
         if (!error.empty()) {
             content_stack_.set_visible_child("grid");
@@ -646,9 +625,9 @@ private:
                     return a.is_directory > b.is_directory;
                 auto la = a.display_name, lb = b.display_name;
                 std::transform(la.begin(), la.end(), la.begin(),
-                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 std::transform(lb.begin(), lb.end(), lb.begin(),
-                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 return la < lb;
             });
 
@@ -660,15 +639,10 @@ private:
 
         update_status(static_cast<int>(visible_entries_.size()));
         render_batch(gen);
-
-        if (populate_queued_) {
-            populate_queued_ = false;
-            populate_files();
-        }
     }
 
     void refilter_files() {
-        ++populate_generation_;
+        const auto gen = populate_generation_.fetch_add(1, std::memory_order_relaxed) + 1;
         render_index_ = 0;
         visible_entries_.clear();
 
@@ -682,11 +656,11 @@ private:
         }
 
         update_status(static_cast<int>(visible_entries_.size()));
-        render_batch(populate_generation_);
+        render_batch(gen);
     }
 
     void render_batch(unsigned int generation) {
-        if (generation != populate_generation_) return;
+        if (generation != populate_generation_.load(std::memory_order_relaxed)) return;
 
         constexpr std::size_t kBatchSize = 80;
         const auto end = std::min(render_index_ + kBatchSize, visible_entries_.size());
@@ -1017,7 +991,7 @@ private:
     }
 
     void show_location_entry() {
-        location_entry_.set_text(current_path_.string());
+        location_entry_.set_text(current_location_string());
         path_stack_.set_visible_child("entry");
         location_entry_.grab_focus();
         location_entry_.select_region(0, -1);
@@ -1058,6 +1032,9 @@ private:
     // ===================== directory monitoring =====================
 
     void start_monitoring() {
+        if (monitor_changed_connection_.connected()) {
+            monitor_changed_connection_.disconnect();
+        }
         monitor_.reset();
         try {
             auto gfile = is_virtual()
@@ -1065,10 +1042,13 @@ private:
                 : Gio::File::create_for_path(current_path_.string());
             monitor_ = gfile->monitor_directory();
             monitor_->set_rate_limit(1000); // max 1 event per second
-            monitor_->signal_changed().connect(
-                [this](const Glib::RefPtr<Gio::File>&,
+            monitor_changed_connection_ = monitor_->signal_changed().connect(
+                [this, alive = alive_](const Glib::RefPtr<Gio::File>&,
                        const Glib::RefPtr<Gio::File>&,
                        Gio::FileMonitor::Event event) {
+                    if (!alive->load()) {
+                        return;
+                    }
                     if (event == Gio::FileMonitor::Event::CREATED
                         || event == Gio::FileMonitor::Event::DELETED
                         || event == Gio::FileMonitor::Event::RENAMED
@@ -1083,9 +1063,12 @@ private:
     void schedule_refresh() {
         if (!refresh_pending_) {
             refresh_pending_ = true;
-            Glib::signal_timeout().connect_once([this]() {
+            refresh_timeout_connection_ = Glib::signal_timeout().connect([this, alive = alive_]() {
                 refresh_pending_ = false;
-                if (alive_->load()) refresh();
+                if (alive->load()) {
+                    refresh();
+                }
+                return false;
             }, 800);
         }
     }
@@ -1154,12 +1137,10 @@ private:
     bool                               show_hidden_        = false;
     bool                               refresh_pending_    = false;
     bool                               toggling_hidden_    = false;
-    bool                               populate_in_progress_ = false;
-    bool                               populate_queued_      = false;
     std::vector<FileEntry>             entries_;
     std::vector<const FileEntry*>      visible_entries_;
     std::size_t                        render_index_        = 0;
-    unsigned int                       populate_generation_ = 0;
+    std::atomic<unsigned int>          populate_generation_{0};
 
     // Clipboard
     std::vector<std::filesystem::path> clipboard_paths_;
@@ -1171,6 +1152,8 @@ private:
     // GIO
     Glib::RefPtr<Gio::FileMonitor>      monitor_;
     Glib::RefPtr<Gio::SimpleActionGroup> file_actions_;
+    sigc::connection                    monitor_changed_connection_;
+    sigc::connection                    refresh_timeout_connection_;
 
     // Navigation / context
     Glib::RefPtr<Gtk::GestureClick>      mouse_nav_gesture_;
@@ -1186,13 +1169,14 @@ int main(int argc, char** argv) {
 
     auto app = Gtk::Application::create("org.hyalo.Files");
 
-    auto config_manager = hyalo::core::ConfigManager(hyalo::core::detect_runtime_paths());
+    const auto runtime_paths = hyalo::core::detect_runtime_paths();
+    auto config_manager = hyalo::core::ConfigManager(runtime_paths);
     if (!config_manager.load()) {
         config_manager.load_defaults();
     }
-    hyalo::core::StyleManager::apply(config_manager);
-    configure_hyalo_icon_theme_fallback();
-    load_hyalo_files_css();
+    if (!hyalo::core::StyleManager::apply(config_manager)) {
+        apply_hyalo_fallback_style(runtime_paths);
+    }
 
     app->signal_activate().connect([&app]() {
         auto* window = new FileManagerWindow();
