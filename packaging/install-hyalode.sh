@@ -28,6 +28,7 @@ NC='\033[0m'
 REPO_URL="https://github.com/mijsys/HyaloDE"
 REPO_NAME="hyalode"
 REPO_SERVER="https://mijsys.github.io/HyaloDE/repo/\$arch"
+REPO_SERVER_FALLBACK="https://raw.githubusercontent.com/mijsys/HyaloDE/gh-pages/repo/\$arch"
 PACMAN_CONF="/etc/pacman.conf"
 
 # ── Helpers ──
@@ -49,14 +50,16 @@ repo_arch() {
 
 repo_db_url() {
     local arch server
+    server="${1:-$REPO_SERVER}"
     arch="$(repo_arch)"
-    server="${REPO_SERVER//\$arch/$arch}"
+    server="${server//\$arch/$arch}"
     echo "${server%/}/hyalode.db"
 }
 
 repo_server_reachable() {
-    local db_url
-    db_url="$(repo_db_url)"
+    local server db_url
+    server="${1:-$REPO_SERVER}"
+    db_url="$(repo_db_url "$server")"
 
     if have_cmd curl; then
         curl -fsL --max-time 12 -o /dev/null "$db_url"
@@ -70,6 +73,20 @@ repo_server_reachable() {
 
     warn "Brak curl/wget, pomijam test dostępności repozytorium: $db_url"
     return 0
+}
+
+select_repo_server() {
+    if repo_server_reachable "$REPO_SERVER"; then
+        echo "$REPO_SERVER"
+        return 0
+    fi
+
+    if repo_server_reachable "$REPO_SERVER_FALLBACK"; then
+        echo "$REPO_SERVER_FALLBACK"
+        return 0
+    fi
+
+    return 1
 }
 
 need_root() {
@@ -132,14 +149,17 @@ EOF
 add_pacman_repo() {
     need_root
 
-    local db_url
-    db_url="$(repo_db_url)"
-
-    if ! repo_server_reachable; then
+    local selected_server db_url
+    if ! selected_server="$(select_repo_server)"; then
+        db_url="$(repo_db_url "$REPO_SERVER")"
         err "Repozytorium pacman jest niedostępne: ${db_url}"
         warn "Wygląda na to, że baza pacmana nie została opublikowana (HTTP 404)."
         warn "Użyj instalacji ze źródeł: sudo ./install-hyalode.sh --from-source"
         return 1
+    fi
+
+    if [ "$selected_server" != "$REPO_SERVER" ]; then
+        warn "GitHub Pages niedostępne; używam fallback: $selected_server"
     fi
 
     if grep -q "^\[${REPO_NAME}\]" "$PACMAN_CONF" 2>/dev/null; then
@@ -153,7 +173,7 @@ add_pacman_repo() {
 
 [${REPO_NAME}]
 SigLevel = Optional TrustAll
-Server = ${REPO_SERVER}
+Server = ${selected_server}
 EOF
 
     ok "Repozytorium dodane. Synchronizacja bazy pakietów..."
@@ -191,7 +211,7 @@ install_deps_arch() {
     pacman -Sy --needed --noconfirm \
         base-devel cmake meson ninja pkg-config git \
         gtkmm-4.0 gtk4-layer-shell \
-        lightdm liblightdm-gobject-1 \
+        lightdm \
         vte4 gdk-pixbuf2 \
         wayland wayland-protocols wlr-protocols \
         nlohmann-json \
@@ -309,75 +329,12 @@ install_from_source() {
 
     cd "$src_dir"
 
-    info "Budowanie HyaloDE..."
-    cmake -S . -B build-install \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DHYALO_BUILD_GREETER=ON \
-        -DHYALO_BUILD_TERMINAL=ON \
-        -DHYALO_BUILD_CONTROL_CENTER=ON \
-        -DHYALO_BUILD_UPDATE_CENTER=ON \
-        -DHYALO_BUILD_SOFTWARE_STORE=ON \
-        -DHYALO_BUILD_FILES=ON
-
-    cmake --build build-install -j"$(nproc)"
-
-    info "Instalacja HyaloDE..."
-    cmake --install build-install
-
-    # Session wrapper
-    install -Dm755 /dev/stdin /usr/libexec/hyalo/hyalo-session <<'SESSIONEOF'
-#!/bin/sh
-set -eu
-PREFIX="/usr"
-PANEL_BIN="$PREFIX/bin/hyalo-panel"
-WALLPAPER_DAEMON_BIN="$PREFIX/bin/hyalo-wallpaperd"
-COMPOSITOR_BIN="$PREFIX/bin/labwc"
-LABWC_CONFIG_DIR="$PREFIX/share/hyalo/labwc"
-
-[ -z "${GSK_RENDERER:-}" ] && export GSK_RENDERER="gl"
-[ -z "${GDK_DISABLE:-}" ] && export GDK_DISABLE="vulkan"
-export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:+$XDG_CURRENT_DESKTOP:}HyaloDE"
-export XDG_SESSION_DESKTOP="HyaloDE"
-
-STARTUP='
-mkdir -p "${XDG_RUNTIME_DIR:-/tmp}/hyalo"
-LOG="${XDG_RUNTIME_DIR:-/tmp}/hyalo/panel.log"
-[ -x "'"$PANEL_BIN"'" ] && ( d=1; while :; do "'"$PANEL_BIN"'" >>"$LOG" 2>&1; sleep "$d"; [ "$d" -lt 8 ] && d=$((d*2)); done ) &
-command -v mako >/dev/null 2>&1 && ! pgrep -xu "$(id -u)" mako >/dev/null 2>&1 && mako >/dev/null 2>&1 &
-command -v swww-daemon >/dev/null 2>&1 && ! swww query >/dev/null 2>&1 && swww-daemon >/dev/null 2>&1 &
-[ -x "'"$WALLPAPER_DAEMON_BIN"'" ] && "'"$WALLPAPER_DAEMON_BIN"'" --daemon >/dev/null 2>&1 &
-command -v dex >/dev/null 2>&1 && dex -a -e HyaloDE >/dev/null 2>&1 &
-'
-exec "${COMPOSITOR_BIN:-labwc}" -C "$LABWC_CONFIG_DIR" -m -s "sh -lc '$STARTUP'" "$@"
-SESSIONEOF
-
-    # Session desktop entry
-    install -Dm644 /dev/stdin /usr/share/wayland-sessions/hyalo.desktop <<EOF
-[Desktop Entry]
-Name=HyaloDE
-Comment=HyaloDE Wayland session
-Exec=/usr/libexec/hyalo/hyalo-session
-Icon=hyalo
-Type=Application
-DesktopNames=HyaloDE;HyaloWM;wlroots
-EOF
-
-    # Config files
-    install -Dm644 config/labwc/rc.xml /usr/share/hyalo/labwc/rc.xml
-    install -Dm755 config/labwc/hyalo-screenshot /usr/bin/hyalo-screenshot
-    install -Dm755 config/labwc/hyalo-wallpaperd /usr/bin/hyalo-wallpaperd
-    install -Dm755 config/labwc/hyalo-driver-manager /usr/bin/hyalo-driver-manager
-    install -Dm644 config/mako/config /usr/share/hyalo/mako/config
-
-    # Theme
-    install -Dm644 config/labwc/themes/HyaloOS/openbox-3/themerc \
-        /usr/share/themes/HyaloOS/openbox-3/themerc
-    for svg_file in config/labwc/themes/HyaloOS/labwc/*.svg; do
-        [ -f "$svg_file" ] || continue
-        install -Dm644 "$svg_file" \
-            "/usr/share/themes/HyaloOS/labwc/$(basename "$svg_file")"
-    done
+    info "Budowanie i instalacja pełnego stosu HyaloDE (aplikacje + compositor)..."
+    bash ./install.sh \
+        --system \
+        --prefix /usr \
+        --build-dir "$src_dir/build-install" \
+        --compositor-build-dir "$src_dir/compositor/hyalo-compositor/build-install"
 
     configure_lightdm
     ok "HyaloDE zbudowane i zainstalowane pomyślnie!"
@@ -448,7 +405,18 @@ uninstall_hyalode() {
         /usr/bin/hyalo-screenshot
         /usr/bin/hyalo-driver-manager
         /usr/bin/hyalo-greeter
+        /usr/bin/labwc
+        /usr/bin/labnag
+        /usr/bin/lab-sensible-terminal
         /usr/libexec/hyalo/hyalo-session
+        /usr/lib/hyalo/libseat.so
+        /usr/lib/hyalo/libseat.so.1
+        /usr/lib/hyalo/libdisplay-info.so
+        /usr/lib/hyalo/libdisplay-info.so.4
+        /usr/lib/hyalo/libdisplay-info.so.0.4.0
+        /usr/lib/hyalo/libliftoff.so
+        /usr/lib/hyalo/libliftoff.so.0
+        /usr/lib/hyalo/libliftoff.so.0.6.0
         /usr/share/wayland-sessions/hyalo.desktop
         /usr/share/xgreeters/hyalo-greeter.desktop
         /etc/lightdm/lightdm.conf.d/50-hyalo-greeter.conf
