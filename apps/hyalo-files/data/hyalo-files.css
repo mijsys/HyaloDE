@@ -1,0 +1,66 @@
+/* Hyalo Files app-level styling; layered on top of global Hyalo theme. */
+
+.hyalo-files-window {
+    background: @hyalo_bg_base;
+    color: @hyalo_text_main;
+}
+
+.files-toolbar {
+    background: @hyalo_bg_card_alt;
+    border: 1px solid @hyalo_border;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.files-nav-btn {
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 8px;
+}
+
+.files-path-label,
+.files-location-entry {
+    background: @hyalo_bg_input;
+    border: 1px solid @hyalo_border;
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.files-sidebar {
+    background: @hyalo_bg_card;
+    border-right: 1px solid @hyalo_border;
+}
+
+.files-places row {
+    border-radius: 8px;
+    margin: 2px 6px;
+}
+
+.files-places row:selected {
+    background: alpha(@hyalo_accent, 0.16);
+    border: 1px solid alpha(@hyalo_accent, 0.36);
+}
+
+.files-content {
+    background: @hyalo_bg_base;
+}
+
+.files-item {
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.files-item:selected,
+.files-item:focus-within {
+    background: alpha(@hyalo_accent, 0.16);
+    outline: 1px solid alpha(@hyalo_accent, 0.42);
+}
+
+.files-item-label {
+    color: @hyalo_text_main;
+    font-size: 12px;
+}
+
+.files-status {
+    color: @hyalo_text_muted;
+}
