@@ -563,10 +563,8 @@ private:
         content_stack_.set_visible_child("loading");
         loading_spinner_.set_spinning(true);
 
-        // Clear grid off-screen (no layout cost since it's hidden behind the stack)
-        while (auto* child = file_grid_.get_first_child()) {
-            file_grid_.remove(*child);
-        }
+        // Clear grid with FlowBox API to avoid removing non-child internal widgets.
+        gtk_flow_box_remove_all(GTK_FLOW_BOX(file_grid_.gobj()));
         entries_.clear();
 
         auto location = current_location_string();
@@ -646,9 +644,7 @@ private:
         render_index_ = 0;
         visible_entries_.clear();
 
-        while (auto* child = file_grid_.get_first_child()) {
-            file_grid_.remove(*child);
-        }
+        gtk_flow_box_remove_all(GTK_FLOW_BOX(file_grid_.gobj()));
 
         for (const auto& entry : entries_) {
             if (!show_hidden_ && entry.is_hidden) continue;
